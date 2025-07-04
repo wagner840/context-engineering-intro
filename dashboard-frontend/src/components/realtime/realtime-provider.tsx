@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import { useNotifications } from "@/store/ui-store";
@@ -41,16 +42,13 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     "connecting" | "connected" | "disconnected" | "error"
   >("disconnected");
   const [events, setEvents] = useState<RealtimeEvent[]>([]);
-  const [subscriptions, setSubscriptions] = useState<Map<string, any>>(
-    new Map()
-  );
-  const [callbacks, setCallbacks] = useState<
-    Map<string, Set<(event: RealtimeEvent) => void>>
-  >(new Map());
-
-  const { addNotification } = useNotifications();
-  const { selectedBlog } = useBlogStore();
-  const supabase = createSupabaseClient();
+  
+  // Use refs to avoid re-creating functions and causing infinite loops
+  const subscriptionsRef = useRef<Map<string, any>>(new Map());
+  const callbacksRef = useRef<Map<string, Set<(event: RealtimeEvent) => void>>>(new Map());
+  const supabaseRef = useRef(createSupabaseClient());
+  const notificationsRef = useRef(useNotifications());
+  const blogStoreRef = useRef(useBlogStore());
 
   const addEvent = useCallback((event: RealtimeEvent) => {
     setEvents((prev) => [event, ...prev.slice(0, 99)]); // Keep last 100 events
@@ -63,27 +61,23 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const subscribe = useCallback(
     (table: string, callback: (event: RealtimeEvent) => void) => {
       // Add callback to the set for this table
-      setCallbacks((prev) => {
-        const newCallbacks = new Map(prev);
-        if (!newCallbacks.has(table)) {
-          newCallbacks.set(table, new Set());
-        }
-        newCallbacks.get(table)!.add(callback);
-        return newCallbacks;
-      });
+      if (!callbacksRef.current.has(table)) {
+        callbacksRef.current.set(table, new Set());
+      }
+      callbacksRef.current.get(table)!.add(callback);
 
       // If this is the first subscription for this table, create the channel
-      if (!subscriptions.has(table)) {
-        const channel = supabase
-          .channel(`realtime-${table}`)
+      if (!subscriptionsRef.current.has(table)) {
+        const channel = supabaseRef.current
+          .channel(`realtime-${table}-${Date.now()}`)
           .on(
             "postgres_changes",
             {
               event: "*",
               schema: "public",
               table: table,
-              filter: selectedBlog?.id
-                ? `blog_id=eq.${selectedBlog.id}`
+              filter: blogStoreRef.current.selectedBlog?.id
+                ? `blog_id=eq.${blogStoreRef.current.selectedBlog.id}`
                 : undefined,
             },
             (payload) => {
@@ -99,151 +93,138 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
               addEvent(event);
 
               // Call all callbacks for this table
-              const tableCallbacks = callbacks.get(table);
+              const tableCallbacks = callbacksRef.current.get(table);
               if (tableCallbacks) {
-                tableCallbacks.forEach((cb) => cb(event));
+                tableCallbacks.forEach((cb) => {
+                  try {
+                    cb(event);
+                  } catch (error) {
+                    console.error("Error in realtime callback:", error);
+                  }
+                });
               }
 
-              // Show notification for important events
+              // Show notification for important events (throttled)
               if (
-                table === "content_posts" ||
-                table === "workflow_executions"
+                (table === "content_posts" || table === "workflow_executions") &&
+                payload.eventType === "INSERT"
               ) {
                 const action = payload.eventType.toLowerCase();
-                const newData = payload.new as any;
                 const entityName =
-                  newData?.title ?? newData?.name ?? `${table} item`;
+                  payload.new?.title || payload.new?.name || `${table} item`;
 
-                addNotification({
-                  type: "info",
-                  title: `${table} ${action}d`,
-                  message: `${entityName} was ${action}d`,
-                });
+                try {
+                  notificationsRef.current.addNotification({
+                    type: "info",
+                    title: `${table} ${action}d`,
+                    message: `${entityName} was ${action}d`,
+                  });
+                } catch (error) {
+                  console.error("Error showing notification:", error);
+                }
               }
             }
           )
           .subscribe((status) => {
+            console.log(`Subscription status for ${table}:`, status);
+
             if (status === "SUBSCRIBED") {
               setIsConnected(true);
               setConnectionStatus("connected");
             } else if (status === "CHANNEL_ERROR") {
               setConnectionStatus("error");
-              addNotification({
-                type: "error",
-                title: "Realtime connection error",
-                message: `Failed to subscribe to ${table} changes`,
-              });
+              try {
+                notificationsRef.current.addNotification({
+                  type: "error",
+                  title: "Realtime connection error",
+                  message: `Failed to subscribe to ${table} changes`,
+                });
+              } catch (error) {
+                console.error("Error showing error notification:", error);
+              }
+            } else if (status === "CLOSED") {
+              setConnectionStatus("disconnected");
             }
           });
 
-        setSubscriptions((prev) => new Map(prev).set(table, channel));
+        subscriptionsRef.current.set(table, channel);
       }
 
       // Return unsubscribe function
       return () => {
-        setCallbacks((prev) => {
-          const newCallbacks = new Map(prev);
-          const tableCallbacks = newCallbacks.get(table);
-          if (tableCallbacks) {
-            tableCallbacks.delete(callback);
-            if (tableCallbacks.size === 0) {
-              newCallbacks.delete(table);
-              // Remove channel subscription if no more callbacks
-              const channel = subscriptions.get(table);
-              if (channel) {
-                supabase.removeChannel(channel);
-                setSubscriptions((prev) => {
-                  const newSubs = new Map(prev);
-                  newSubs.delete(table);
-                  return newSubs;
-                });
-              }
+        const tableCallbacks = callbacksRef.current.get(table);
+        if (tableCallbacks) {
+          tableCallbacks.delete(callback);
+          if (tableCallbacks.size === 0) {
+            callbacksRef.current.delete(table);
+            // Remove channel subscription if no more callbacks
+            const channel = subscriptionsRef.current.get(table);
+            if (channel) {
+              supabaseRef.current.removeChannel(channel);
+              subscriptionsRef.current.delete(table);
             }
           }
-          return newCallbacks;
-        });
+        }
       };
     },
-    [
-      supabase,
-      subscriptions,
-      callbacks,
-      selectedBlog?.id,
-      addEvent,
-      addNotification,
-    ]
+    [addEvent]
   );
 
-  const unsubscribe = useCallback(
-    (table: string) => {
-      const channel = subscriptions.get(table);
-      if (channel) {
-        supabase.removeChannel(channel);
-        setSubscriptions((prev) => {
-          const newSubs = new Map(prev);
-          newSubs.delete(table);
-          return newSubs;
-        });
-      }
-      setCallbacks((prev) => {
-        const newCallbacks = new Map(prev);
-        newCallbacks.delete(table);
-        return newCallbacks;
-      });
-    },
-    [supabase, subscriptions]
-  );
+  const unsubscribe = useCallback((table: string) => {
+    const channel = subscriptionsRef.current.get(table);
+    if (channel) {
+      supabaseRef.current.removeChannel(channel);
+      subscriptionsRef.current.delete(table);
+    }
+    callbacksRef.current.delete(table);
+  }, []);
 
-  // Initialize core subscriptions
+  // Initialize core subscriptions only once
   useEffect(() => {
-    setConnectionStatus("connecting");
+    if (subscriptionsRef.current.size === 0) {
+      setConnectionStatus("connecting");
 
-    // Subscribe to important tables
-    const coreSubscriptions = [
-      "content_posts",
-      "main_keywords",
-      "workflow_executions",
-      "blogs",
-      "serp_results",
-    ];
+      // Subscribe to important tables with minimal callbacks
+      const coreSubscriptions = [
+        "content_posts",
+        "workflow_executions",
+      ];
 
-    const unsubscribeFunctions = coreSubscriptions.map(
-      (table) => subscribe(table, () => {}) // Empty callback for core subscriptions
-    );
+      const unsubscribeFunctions: (() => void)[] = [];
 
-    return () => {
-      unsubscribeFunctions.forEach((unsub) => unsub());
-    };
-    // Depend only on the selected blog to avoid infinite re-subscriptions
-  }, [selectedBlog?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+      coreSubscriptions.forEach((table) => {
+        const unsub = subscribe(table, () => {
+          // Empty callback for core subscriptions - just track events
+        });
+        unsubscribeFunctions.push(unsub);
+      });
+
+      return () => {
+        unsubscribeFunctions.forEach((unsub) => unsub());
+      };
+    }
+  }, [subscribe]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      subscriptions.forEach((channel) => {
-        supabase.removeChannel(channel);
+      subscriptionsRef.current.forEach((channel) => {
+        supabaseRef.current.removeChannel(channel);
       });
+      subscriptionsRef.current.clear();
+      callbacksRef.current.clear();
     };
-  }, [supabase, subscriptions]);
+  }, []);
 
-  // Monitor connection status
+  // Monitor connection status - simplified
   useEffect(() => {
     const interval = setInterval(() => {
-      if (subscriptions.size > 0) {
-        setIsConnected(true);
-        if (connectionStatus !== "connected") {
-          setConnectionStatus("connected");
-        }
-      } else {
-        setIsConnected(false);
-        if (connectionStatus === "connected") {
-          setConnectionStatus("disconnected");
-        }
-      }
-    }, 5000); // Check every 5 seconds
+      const hasActiveSubscriptions = subscriptionsRef.current.size > 0;
+      setIsConnected(hasActiveSubscriptions);
+    }, 10000); // Check every 10 seconds instead of 5
 
     return () => clearInterval(interval);
-  }, [subscriptions.size, connectionStatus]);
+  }, []);
 
   const value: RealtimeContextType = {
     isConnected,
