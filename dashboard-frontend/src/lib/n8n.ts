@@ -267,3 +267,51 @@ export const getN8nClient = (): N8nApiClient => {
 
   return createN8nClient(baseUrl, apiKey)
 }
+
+// N8n API wrapper with enhanced functionality
+export class N8nAPI {
+  private client: N8nApiClient
+
+  constructor() {
+    this.client = getN8nClient()
+  }
+
+  // Delegate all methods to the client
+  getWorkflows = this.client.getWorkflows.bind(this.client)
+  getWorkflow = this.client.getWorkflow.bind(this.client)
+  createWorkflow = this.client.createWorkflow.bind(this.client)
+  updateWorkflow = this.client.updateWorkflow.bind(this.client)
+  deleteWorkflow = this.client.deleteWorkflow.bind(this.client)
+  activateWorkflow = this.client.activateWorkflow.bind(this.client)
+  deactivateWorkflow = this.client.deactivateWorkflow.bind(this.client)
+  executeWorkflow = this.client.executeWorkflow.bind(this.client)
+  getExecution = this.client.getExecution.bind(this.client)
+  getExecutions = this.client.getExecutions.bind(this.client)
+  stopExecution = this.client.stopExecution.bind(this.client)
+  retryExecution = this.client.retryExecution.bind(this.client)
+  deleteExecution = this.client.deleteExecution.bind(this.client)
+  getCredentials = this.client.getCredentials.bind(this.client)
+  createCredential = this.client.createCredential.bind(this.client)
+  getHealth = this.client.getHealth.bind(this.client)
+  getActiveWebhooks = this.client.getActiveWebhooks.bind(this.client)
+  testWebhook = this.client.testWebhook.bind(this.client)
+  getWorkflowStatus = this.client.getWorkflowStatus.bind(this.client)
+  getWorkflowPerformanceMetrics = this.client.getWorkflowPerformanceMetrics.bind(this.client)
+
+  // Additional methods for waiting for execution
+  async waitForExecution(id: string, timeout: number = 30000): Promise<N8nExecution> {
+    const startTime = Date.now()
+    
+    while (Date.now() - startTime < timeout) {
+      const execution = await this.getExecution(id)
+      
+      if (execution.status !== 'running') {
+        return execution
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+    
+    throw new Error(`Execution ${id} did not complete within ${timeout}ms`)
+  }
+}

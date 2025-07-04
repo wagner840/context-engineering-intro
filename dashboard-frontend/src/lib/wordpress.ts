@@ -278,3 +278,29 @@ export const getWordPressClientByDomain = (domain: string): WordPressApiClient =
     password
   )
 }
+
+// WordPress API wrapper with configuration
+export class WordPressAPI {
+  private client: WordPressApiClient
+
+  constructor(config: {
+    api_url: string
+    username: string
+    app_password: string
+  }) {
+    this.client = new WordPressApiClient(config.api_url, config.username, config.app_password)
+  }
+
+  // Delegate all methods to the client
+  getPosts = this.client.getPosts.bind(this.client)
+  getPost = this.client.getPost.bind(this.client)
+  createPost = this.client.createPost.bind(this.client)
+  updatePost = this.client.updatePost.bind(this.client)
+  deletePost = this.client.deletePost.bind(this.client)
+  getCategories = this.client.getCategories.bind(this.client)
+  createCategory = this.client.createCategory.bind(this.client)
+  getTags = this.client.getTags.bind(this.client)
+  createTag = this.client.createTag.bind(this.client)
+  getMedia = this.client.getMedia.bind(this.client)
+  uploadMedia = this.client.uploadMedia.bind(this.client)
+}
