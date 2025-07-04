@@ -1,218 +1,166 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
-import { useNotifications } from '@/store/ui-store'
-import type { Database } from '@/types/database'
-
-type Blog = Database['public']['Tables']['blogs']['Row']
-type BlogInsert = Database['public']['Tables']['blogs']['Insert']
-type BlogUpdate = Database['public']['Tables']['blogs']['Update']
-
-export const BLOG_QUERY_KEYS = {
-  all: ['blogs'] as const,
-  lists: () => [...BLOG_QUERY_KEYS.all, 'list'] as const,
-  list: (filters: string) => [...BLOG_QUERY_KEYS.lists(), { filters }] as const,
-  details: () => [...BLOG_QUERY_KEYS.all, 'detail'] as const,
-  detail: (id: string) => [...BLOG_QUERY_KEYS.details(), id] as const,
-} as const
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type {
+  Blog,
+  BlogWithKeywords,
+  DatabaseInsert,
+  DatabaseUpdate,
+} from "@/types/database";
+import { toast } from "sonner";
 
 export function useBlogs() {
-  const { addNotification } = useNotifications()
-
   return useQuery({
-    queryKey: BLOG_QUERY_KEYS.lists(),
+    queryKey: ["blogs"],
     queryFn: async (): Promise<Blog[]> => {
       const { data, error } = await supabase
-        .from('blogs')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+        .from("blogs")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw error;
+      return data || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch blogs',
-        message: error.message,
-      })
-    },
-  })
+  });
 }
 
 export function useBlog(id: string) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
-    queryKey: BLOG_QUERY_KEYS.detail(id),
-    queryFn: async (): Promise<Blog> => {
+    queryKey: ["blog", id],
+    queryFn: async (): Promise<BlogWithKeywords> => {
       const { data, error } = await supabase
-        .from('blogs')
-        .select('*')
-        .eq('id', id)
-        .single()
+        .from("blogs")
+        .select(
+          `
+          *,
+          keywords:main_keywords(*),
+          posts:content_posts(
+            id,
+            title,
+            status,
+            created_at,
+            author:authors(name)
+          )
+        `
+        )
+        .eq("id", id)
+        .single();
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw error;
+      return data;
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch blog',
-        message: error.message,
-      })
-    },
-  })
+  });
 }
 
 export function useCreateBlog() {
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (blog: BlogInsert): Promise<Blog> => {
+    mutationFn: async (blog: DatabaseInsert<Blog>) => {
       const { data, error } = await supabase
-        .from('blogs')
+        .from("blogs")
         .insert(blog)
         .select()
-        .single()
+        .single();
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw error;
+      return data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: BLOG_QUERY_KEYS.lists() })
-      addNotification({
-        type: 'success',
-        title: 'Blog created',
-        message: `Successfully created ${data.name}`,
-      })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+      toast.success("Blog criado com sucesso!");
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to create blog',
-        message: error.message,
-      })
+    onError: (error) => {
+      toast.error(`Erro ao criar blog: ${error.message}`);
     },
-  })
+  });
 }
 
 export function useUpdateBlog() {
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: BlogUpdate }): Promise<Blog> => {
+    mutationFn: async ({
+      id,
+      ...updates
+    }: DatabaseUpdate<Blog> & { id: string }) => {
       const { data, error } = await supabase
-        .from('blogs')
+        .from("blogs")
         .update(updates)
-        .eq('id', id)
+        .eq("id", id)
         .select()
-        .single()
+        .single();
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw error;
+      return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: BLOG_QUERY_KEYS.lists() })
-      queryClient.invalidateQueries({ queryKey: BLOG_QUERY_KEYS.detail(data.id) })
-      addNotification({
-        type: 'success',
-        title: 'Blog updated',
-        message: `Successfully updated ${data.name}`,
-      })
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+      queryClient.invalidateQueries({ queryKey: ["blog", data.id] });
+      toast.success("Blog atualizado com sucesso!");
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to update blog',
-        message: error.message,
-      })
+    onError: (error) => {
+      toast.error(`Erro ao atualizar blog: ${error.message}`);
     },
-  })
+  });
 }
 
 export function useDeleteBlog() {
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      // Soft delete by setting is_active to false
-      const { error } = await supabase
-        .from('blogs')
-        .update({ is_active: false })
-        .eq('id', id)
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("blogs").delete().eq("id", id);
 
-      if (error) {
-        throw new Error(error.message)
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: BLOG_QUERY_KEYS.lists() })
-      addNotification({
-        type: 'success',
-        title: 'Blog deleted',
-        message: 'Blog has been successfully deleted',
-      })
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+      toast.success("Blog removido com sucesso!");
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to delete blog',
-        message: error.message,
-      })
+    onError: (error) => {
+      toast.error(`Erro ao remover blog: ${error.message}`);
     },
-  })
+  });
 }
 
-export function useBlogRealtime() {
-  const queryClient = useQueryClient()
+export function useBlogStats(blogId: string) {
+  return useQuery({
+    queryKey: ["blog-stats", blogId],
+    queryFn: async () => {
+      const [keywordsRes, postsRes, opportunitiesRes] = await Promise.all([
+        supabase
+          .from("main_keywords")
+          .select("id", { count: "exact" })
+          .eq("blog_id", blogId),
+        supabase
+          .from("content_posts")
+          .select("id, status", { count: "exact" })
+          .eq("blog_id", blogId),
+        supabase
+          .from("content_opportunities_clusters")
+          .select("id, status", { count: "exact" })
+          .eq("blog_id", blogId),
+      ]);
 
-  return {
-    subscribe: () => {
-      const channel = supabase
-        .channel('blogs_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'blogs',
-          },
-          (payload) => {
-            queryClient.invalidateQueries({ queryKey: BLOG_QUERY_KEYS.lists() })
-            
-            if (payload.eventType === 'UPDATE' && payload.new) {
-              queryClient.setQueryData(
-                BLOG_QUERY_KEYS.detail(payload.new.id),
-                payload.new
-              )
-            }
-          }
-        )
-        .subscribe()
+      if (keywordsRes.error) throw keywordsRes.error;
+      if (postsRes.error) throw postsRes.error;
+      if (opportunitiesRes.error) throw opportunitiesRes.error;
 
-      return () => {
-        supabase.removeChannel(channel)
-      }
-    }
-  }
+      const publishedPosts =
+        postsRes.data?.filter((p) => p.status === "published").length || 0;
+      const pendingOpportunities =
+        opportunitiesRes.data?.filter((o) => o.status === "identified")
+          .length || 0;
+
+      return {
+        totalKeywords: keywordsRes.count || 0,
+        totalPosts: postsRes.count || 0,
+        publishedPosts,
+        totalOpportunities: opportunitiesRes.count || 0,
+        pendingOpportunities,
+      };
+    },
+    enabled: !!blogId,
+  });
 }

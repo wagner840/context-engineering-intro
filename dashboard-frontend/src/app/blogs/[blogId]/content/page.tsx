@@ -1,74 +1,122 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useParams } from 'next/navigation'
-import { Plus, Search, Filter, Calendar, FileText, BarChart3 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useContentPosts, useContentStats } from '@/hooks/use-content'
-import { useBlog } from '@/hooks/use-blogs'
-import { useModals } from '@/store/ui-store'
-import { formatDate, formatNumber } from '@/lib/utils'
+import { useState } from "react";
+import { useParams } from "next/navigation";
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  FileText,
+  BarChart3,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useContentPosts, useContentStats } from "@/hooks/use-content";
+import { useBlog } from "@/hooks/use-blogs";
+import { useModals } from "@/store/ui-store";
+import { formatDate, formatNumber } from "@/lib/utils";
+import Link from "next/link";
 
-type ContentStatus = 'draft' | 'review' | 'scheduled' | 'published' | 'archived' | 'all'
+type ContentStatus =
+  | "draft"
+  | "review"
+  | "scheduled"
+  | "published"
+  | "archived"
+  | "all";
 
 export default function ContentPage() {
-  const params = useParams()
-  const blogId = params?.blogId as string
-  
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<ContentStatus>('all')
+  const params = useParams();
+  const blogId = params?.blogId as string;
 
-  const { data: blog } = useBlog(blogId)
-  const { data: posts, isLoading, error } = useContentPosts(blogId)
-  const stats = useContentStats(blogId)
-  const { openModal } = useModals()
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ContentStatus>("all");
 
-  const filteredPosts = posts?.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (post.focus_keyword && post.focus_keyword.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesStatus = statusFilter === 'all' || post.status === statusFilter
-    
-    return matchesSearch && matchesStatus
-  })
+  const { data: blog } = useBlog(blogId);
+  const { data: posts, isLoading, error } = useContentPosts(blogId);
+  const stats = useContentStats(blogId);
+  const { openModal } = useModals();
+
+  const filteredPosts = posts?.filter((post) => {
+    const matchesSearch =
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (post.focus_keyword &&
+        post.focus_keyword.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus =
+      statusFilter === "all" || post.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const handleCreatePost = () => {
-    openModal('create-post', { blogId })
-  }
+    openModal("create-post", { blogId });
+  };
 
   const handleEditPost = (post: any) => {
-    openModal('edit-post', { post })
-  }
+    openModal("edit-post", { post });
+  };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'published': return 'default'
-      case 'scheduled': return 'secondary'
-      case 'review': return 'destructive'
-      case 'draft': return 'outline'
-      case 'archived': return 'secondary'
-      default: return 'outline'
+      case "published":
+        return "default";
+      case "scheduled":
+        return "secondary";
+      case "review":
+        return "destructive";
+      case "draft":
+        return "outline";
+      case "archived":
+        return "secondary";
+      default:
+        return "outline";
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'published': return 'text-green-600'
-      case 'scheduled': return 'text-blue-600'
-      case 'review': return 'text-yellow-600'
-      case 'draft': return 'text-gray-600'
-      case 'archived': return 'text-gray-400'
-      default: return 'text-gray-600'
+      case "published":
+        return "text-green-600";
+      case "scheduled":
+        return "text-blue-600";
+      case "review":
+        return "text-yellow-600";
+      case "draft":
+        return "text-gray-600";
+      case "archived":
+        return "text-gray-400";
+      default:
+        return "text-gray-600";
     }
-  }
+  };
 
   if (isLoading) {
-    return <ContentPageSkeleton />
+    return <ContentPageSkeleton />;
   }
 
   if (error) {
@@ -79,11 +127,13 @@ export default function ContentPage() {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-destructive">Error loading content: {error.message}</p>
+            <p className="text-destructive">
+              Error loading content: {error.message}
+            </p>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -97,10 +147,12 @@ export default function ContentPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => openModal('content-pipeline', { blogId })}>
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Pipeline View
-          </Button>
+          <Link href="/pipeline" className="w-fit">
+            <Button variant="outline">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Pipeline View
+            </Button>
+          </Link>
           <Button onClick={handleCreatePost}>
             <Plus className="h-4 w-4 mr-2" />
             New Post
@@ -116,10 +168,10 @@ export default function ContentPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(stats.total)}</div>
-            <p className="text-xs text-muted-foreground">
-              All content posts
-            </p>
+            <div className="text-2xl font-bold">
+              {formatNumber(stats.total)}
+            </div>
+            <p className="text-xs text-muted-foreground">All content posts</p>
           </CardContent>
         </Card>
 
@@ -129,10 +181,10 @@ export default function ContentPage() {
             <div className="h-4 w-4 rounded-full bg-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatNumber(stats.published)}</div>
-            <p className="text-xs text-muted-foreground">
-              Live posts
-            </p>
+            <div className="text-2xl font-bold text-green-600">
+              {formatNumber(stats.published)}
+            </div>
+            <p className="text-xs text-muted-foreground">Live posts</p>
           </CardContent>
         </Card>
 
@@ -142,10 +194,10 @@ export default function ContentPage() {
             <div className="h-4 w-4 rounded-full bg-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{formatNumber(stats.review)}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting review
-            </p>
+            <div className="text-2xl font-bold text-yellow-600">
+              {formatNumber(stats.review)}
+            </div>
+            <p className="text-xs text-muted-foreground">Awaiting review</p>
           </CardContent>
         </Card>
 
@@ -155,10 +207,10 @@ export default function ContentPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatNumber(stats.scheduled)}</div>
-            <p className="text-xs text-muted-foreground">
-              Future publication
-            </p>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatNumber(stats.scheduled)}
+            </div>
+            <p className="text-xs text-muted-foreground">Future publication</p>
           </CardContent>
         </Card>
 
@@ -168,10 +220,10 @@ export default function ContentPage() {
             <div className="h-4 w-4 rounded-full bg-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{formatNumber(stats.draft)}</div>
-            <p className="text-xs text-muted-foreground">
-              Work in progress
-            </p>
+            <div className="text-2xl font-bold text-gray-600">
+              {formatNumber(stats.draft)}
+            </div>
+            <p className="text-xs text-muted-foreground">Work in progress</p>
           </CardContent>
         </Card>
       </div>
@@ -196,8 +248,11 @@ export default function ContentPage() {
                 className="pl-10"
               />
             </div>
-            
-            <Select value={statusFilter} onValueChange={(value: ContentStatus) => setStatusFilter(value)}>
+
+            <Select
+              value={statusFilter}
+              onValueChange={(value: ContentStatus) => setStatusFilter(value)}
+            >
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -231,9 +286,9 @@ export default function ContentPage() {
                 {filteredPosts?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8">
-                      {searchTerm || statusFilter !== 'all'
-                        ? 'No posts match your filters.'
-                        : 'No posts found.'}
+                      {searchTerm || statusFilter !== "all"
+                        ? "No posts match your filters."
+                        : "No posts found."}
                       <div className="mt-2">
                         <Button variant="outline" onClick={handleCreatePost}>
                           Create your first post
@@ -265,7 +320,7 @@ export default function ContentPage() {
                       </TableCell>
                       <TableCell>
                         {/* @ts-ignore - authors relation */}
-                        <span>{post.authors?.name || 'Unknown'}</span>
+                        <span>{post.authors?.name || "Unknown"}</span>
                       </TableCell>
                       <TableCell>
                         {post.focus_keyword ? (
@@ -275,22 +330,32 @@ export default function ContentPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className="font-mono">{formatNumber(post.word_count)}</span>
+                        <span className="font-mono">
+                          {formatNumber(post.word_count)}
+                        </span>
                       </TableCell>
                       <TableCell>
                         {post.seo_score ? (
                           <div className="flex items-center space-x-2">
-                            <span className={getStatusColor(post.seo_score >= 80 ? 'published' : post.seo_score >= 60 ? 'review' : 'draft')}>
+                            <span
+                              className={getStatusColor(
+                                post.seo_score >= 80
+                                  ? "published"
+                                  : post.seo_score >= 60
+                                    ? "review"
+                                    : "draft"
+                              )}
+                            >
                               {post.seo_score}%
                             </span>
                             <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
                               <div
                                 className={`h-full ${
                                   post.seo_score >= 80
-                                    ? 'bg-green-500'
+                                    ? "bg-green-500"
                                     : post.seo_score >= 60
-                                    ? 'bg-yellow-500'
-                                    : 'bg-red-500'
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
                                 }`}
                                 style={{ width: `${post.seo_score}%` }}
                               />
@@ -300,28 +365,26 @@ export default function ContentPage() {
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        {formatDate(post.created_at)}
-                      </TableCell>
+                      <TableCell>{formatDate(post.created_at)}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={(e) => {
-                              e.stopPropagation()
-                              handleEditPost(post)
+                              e.stopPropagation();
+                              handleEditPost(post);
                             }}
                           >
                             Edit
                           </Button>
-                          {post.status === 'draft' && (
+                          {post.status === "draft" && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={(e) => {
-                                e.stopPropagation()
-                                openModal('publish-post', { post })
+                                e.stopPropagation();
+                                openModal("publish-post", { post });
                               }}
                             >
                               Publish
@@ -338,7 +401,7 @@ export default function ContentPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 function ContentPageSkeleton() {
@@ -388,5 +451,5 @@ function ContentPageSkeleton() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

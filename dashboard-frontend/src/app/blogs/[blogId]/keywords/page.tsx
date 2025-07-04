@@ -1,69 +1,141 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useParams } from 'next/navigation'
-import { Plus, Search, Filter, TrendingUp, Target, BarChart3 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useMainKeywords, useKeywordOpportunities } from '@/hooks/use-keywords'
-import { useBlog } from '@/hooks/use-blogs'
-import { useModals } from '@/store/ui-store'
-import { formatNumber, formatCurrency } from '@/lib/utils'
+import { useState } from "react";
+import { useParams } from "next/navigation";
+import {
+  Plus,
+  Search,
+  Filter,
+  TrendingUp,
+  Target,
+  BarChart3,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useMainKeywords,
+  useKeywordOpportunities,
+  useSemanticKeywordSearch,
+} from "@/hooks/use-keywords";
+import { useBlog } from "@/hooks/use-blogs";
+import { useModals } from "@/store/ui-store";
+import { formatNumber, formatCurrency } from "@/lib/utils";
 
-type CompetitionLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'all'
-type SearchIntent = 'informational' | 'navigational' | 'commercial' | 'transactional' | 'all'
+type CompetitionLevel = "LOW" | "MEDIUM" | "HIGH" | "all";
+type SearchIntent =
+  | "informational"
+  | "navigational"
+  | "commercial"
+  | "transactional"
+  | "all";
 
 export default function KeywordsPage() {
-  const params = useParams()
-  const blogId = params?.blogId as string
-  
-  const [searchTerm, setSearchTerm] = useState('')
-  const [competitionFilter, setCompetitionFilter] = useState<CompetitionLevel>('all')
-  const [intentFilter, setIntentFilter] = useState<SearchIntent>('all')
-  const [showUsedOnly, setShowUsedOnly] = useState(false)
+  const params = useParams();
+  const blogId = params?.blogId as string;
 
-  const { data: blog } = useBlog(blogId)
-  const { data: keywords, isLoading: keywordsLoading, error: keywordsError } = useMainKeywords(blogId)
-  const { data: opportunities, isLoading: opportunitiesLoading } = useKeywordOpportunities(blogId)
-  const { openModal } = useModals()
+  const [searchTerm, setSearchTerm] = useState("");
+  const [competitionFilter, setCompetitionFilter] =
+    useState<CompetitionLevel>("all");
+  const [intentFilter, setIntentFilter] = useState<SearchIntent>("all");
+  const [showUsedOnly, setShowUsedOnly] = useState(false);
+  const [semanticEnabled, setSemanticEnabled] = useState(true);
 
-  const filteredKeywords = keywords?.filter(keyword => {
-    const matchesSearch = keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCompetition = competitionFilter === 'all' || keyword.competition === competitionFilter
-    const matchesIntent = intentFilter === 'all' || keyword.search_intent === intentFilter
-    const matchesUsed = !showUsedOnly || keyword.is_used
-    
-    return matchesSearch && matchesCompetition && matchesIntent && matchesUsed
-  })
+  const { data: blog } = useBlog(blogId);
+  const {
+    data: keywords,
+    isLoading: keywordsLoading,
+    error: keywordsError,
+  } = useMainKeywords(blogId);
+  const { data: opportunities, isLoading: opportunitiesLoading } =
+    useKeywordOpportunities(blogId);
+  const { openModal } = useModals();
 
-  const stats = keywords ? {
-    total: keywords.length,
-    used: keywords.filter(k => k.is_used).length,
-    unused: keywords.filter(k => !k.is_used).length,
-    avgMsv: Math.round(keywords.reduce((sum, k) => sum + (k.msv || 0), 0) / keywords.length),
-    avgDifficulty: Math.round(keywords.reduce((sum, k) => sum + (k.kw_difficulty || 0), 0) / keywords.length),
-    avgCpc: keywords.reduce((sum, k) => sum + (k.cpc || 0), 0) / keywords.length,
-  } : null
+  const semanticSearch = useSemanticKeywordSearch();
+  const semanticResults = semanticSearch.data;
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    if (semanticEnabled && value.length >= 3) {
+      semanticSearch.mutate({
+        query: value,
+        table: "keyword_variations",
+        similarity_threshold: 0.6,
+        limit: 15,
+        filters: { blog_id: blogId },
+      });
+    }
+  };
+
+  const filteredKeywords = keywords?.filter((keyword) => {
+    const matchesSearch = keyword.keyword
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCompetition =
+      competitionFilter === "all" || keyword.competition === competitionFilter;
+    const matchesIntent =
+      intentFilter === "all" || keyword.search_intent === intentFilter;
+    const matchesUsed = !showUsedOnly || keyword.is_used;
+
+    return matchesSearch && matchesCompetition && matchesIntent && matchesUsed;
+  });
+
+  const stats = keywords
+    ? {
+        total: keywords.length,
+        used: keywords.filter((k) => k.is_used).length,
+        unused: keywords.filter((k) => !k.is_used).length,
+        avgMsv: Math.round(
+          keywords.reduce((sum, k) => sum + (k.msv || 0), 0) / keywords.length
+        ),
+        avgDifficulty: Math.round(
+          keywords.reduce((sum, k) => sum + (k.kw_difficulty || 0), 0) /
+            keywords.length
+        ),
+        avgCpc:
+          keywords.reduce((sum, k) => sum + (k.cpc || 0), 0) / keywords.length,
+      }
+    : null;
 
   const handleCreateKeyword = () => {
-    openModal('create-keyword', { blogId })
-  }
+    openModal("create-keyword", { blogId });
+  };
 
   const handleEditKeyword = (keyword: any) => {
-    openModal('edit-keyword', { keyword })
-  }
+    openModal("edit-keyword", { keyword });
+  };
 
   const handleImportKeywords = () => {
-    openModal('import-keywords', { blogId })
-  }
+    openModal("import-keywords", { blogId });
+  };
 
   if (keywordsLoading) {
-    return <KeywordsPageSkeleton />
+    return <KeywordsPageSkeleton />;
   }
 
   if (keywordsError) {
@@ -74,11 +146,13 @@ export default function KeywordsPage() {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-destructive">Error loading keywords: {keywordsError.message}</p>
+            <p className="text-destructive">
+              Error loading keywords: {keywordsError.message}
+            </p>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -108,24 +182,33 @@ export default function KeywordsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Keywords</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Keywords
+              </CardTitle>
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatNumber(stats.total)}</div>
+              <div className="text-2xl font-bold">
+                {formatNumber(stats.total)}
+              </div>
               <p className="text-xs text-muted-foreground">
-                {formatNumber(stats.used)} used, {formatNumber(stats.unused)} unused
+                {formatNumber(stats.used)} used, {formatNumber(stats.unused)}{" "}
+                unused
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Monthly Volume</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Avg Monthly Volume
+              </CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatNumber(stats.avgMsv)}</div>
+              <div className="text-2xl font-bold">
+                {formatNumber(stats.avgMsv)}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Search volume per keyword
               </p>
@@ -134,7 +217,9 @@ export default function KeywordsPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Difficulty</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Avg Difficulty
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -151,10 +236,10 @@ export default function KeywordsPage() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.avgCpc)}</div>
-              <p className="text-xs text-muted-foreground">
-                Cost per click
-              </p>
+              <div className="text-2xl font-bold">
+                {formatCurrency(stats.avgCpc)}
+              </div>
+              <p className="text-xs text-muted-foreground">Cost per click</p>
             </CardContent>
           </Card>
         </div>
@@ -172,9 +257,15 @@ export default function KeywordsPage() {
           <CardContent>
             <div className="space-y-3">
               {opportunities.slice(0, 5).map((opportunity, index) => (
-                <div key={opportunity.keyword} className="flex items-center justify-between p-3 border rounded-lg">
+                <div
+                  key={opportunity.keyword}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div className="flex items-center space-x-3">
-                    <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center">
+                    <Badge
+                      variant="outline"
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                    >
                       {index + 1}
                     </Badge>
                     <div>
@@ -182,7 +273,9 @@ export default function KeywordsPage() {
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                         <span>MSV: {formatNumber(opportunity.msv || 0)}</span>
                         <span>•</span>
-                        <span>Difficulty: {opportunity.kw_difficulty || 0}%</span>
+                        <span>
+                          Difficulty: {opportunity.kw_difficulty || 0}%
+                        </span>
                         <span>•</span>
                         <span>Intent: {opportunity.search_intent}</span>
                       </div>
@@ -224,12 +317,17 @@ export default function KeywordsPage() {
               <Input
                 placeholder="Search keywords..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-10"
               />
             </div>
-            
-            <Select value={competitionFilter} onValueChange={(value: CompetitionLevel) => setCompetitionFilter(value)}>
+
+            <Select
+              value={competitionFilter}
+              onValueChange={(value: CompetitionLevel) =>
+                setCompetitionFilter(value)
+              }
+            >
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Competition" />
               </SelectTrigger>
@@ -241,7 +339,10 @@ export default function KeywordsPage() {
               </SelectContent>
             </Select>
 
-            <Select value={intentFilter} onValueChange={(value: SearchIntent) => setIntentFilter(value)}>
+            <Select
+              value={intentFilter}
+              onValueChange={(value: SearchIntent) => setIntentFilter(value)}
+            >
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Intent" />
               </SelectTrigger>
@@ -263,6 +364,58 @@ export default function KeywordsPage() {
             </Button>
           </div>
 
+          {/* Semantic Search Results */}
+          {semanticResults && semanticResults.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Semantic Matches</CardTitle>
+                <CardDescription>
+                  Keywords similares ao termo buscado
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border mb-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Keyword</TableHead>
+                        <TableHead>Similarity</TableHead>
+                        <TableHead>MSV</TableHead>
+                        <TableHead>Difficulty</TableHead>
+                        <TableHead>Intent</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {semanticResults.map((result) => (
+                        <TableRow
+                          key={result.item.id}
+                          className="cursor-pointer"
+                          onClick={() => handleEditKeyword(result.item)}
+                        >
+                          <TableCell>{result.item.keyword}</TableCell>
+                          <TableCell>
+                            {(result.similarity * 100).toFixed(0)}%
+                          </TableCell>
+                          <TableCell>
+                            {result.item.msv
+                              ? formatNumber(result.item.msv)
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {result.item.kw_difficulty ?? "-"}
+                          </TableCell>
+                          <TableCell>
+                            {result.item.search_intent ?? "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Table */}
           <div className="rounded-md border">
             <Table>
@@ -282,9 +435,12 @@ export default function KeywordsPage() {
                 {filteredKeywords?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8">
-                      {searchTerm || competitionFilter !== 'all' || intentFilter !== 'all' || showUsedOnly
-                        ? 'No keywords match your filters.'
-                        : 'No keywords found.'}
+                      {searchTerm ||
+                      competitionFilter !== "all" ||
+                      intentFilter !== "all" ||
+                      showUsedOnly
+                        ? "No keywords match your filters."
+                        : "No keywords found."}
                       <div className="mt-2">
                         <Button variant="outline" onClick={handleCreateKeyword}>
                           Add your first keyword
@@ -303,7 +459,7 @@ export default function KeywordsPage() {
                         <div className="font-medium">{keyword.keyword}</div>
                       </TableCell>
                       <TableCell>
-                        {keyword.msv ? formatNumber(keyword.msv) : '-'}
+                        {keyword.msv ? formatNumber(keyword.msv) : "-"}
                       </TableCell>
                       <TableCell>
                         {keyword.kw_difficulty ? (
@@ -313,29 +469,31 @@ export default function KeywordsPage() {
                               <div
                                 className={`h-full ${
                                   keyword.kw_difficulty <= 30
-                                    ? 'bg-green-500'
+                                    ? "bg-green-500"
                                     : keyword.kw_difficulty <= 70
-                                    ? 'bg-yellow-500'
-                                    : 'bg-red-500'
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
                                 }`}
                                 style={{ width: `${keyword.kw_difficulty}%` }}
                               />
                             </div>
                           </div>
-                        ) : '-'}
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                       <TableCell>
-                        {keyword.cpc ? formatCurrency(keyword.cpc) : '-'}
+                        {keyword.cpc ? formatCurrency(keyword.cpc) : "-"}
                       </TableCell>
                       <TableCell>
                         {keyword.competition && (
                           <Badge
                             variant={
-                              keyword.competition === 'LOW'
-                                ? 'default'
-                                : keyword.competition === 'MEDIUM'
-                                ? 'secondary'
-                                : 'destructive'
+                              keyword.competition === "LOW"
+                                ? "default"
+                                : keyword.competition === "MEDIUM"
+                                  ? "secondary"
+                                  : "destructive"
                             }
                           >
                             {keyword.competition}
@@ -350,8 +508,10 @@ export default function KeywordsPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={keyword.is_used ? "default" : "secondary"}>
-                          {keyword.is_used ? 'Used' : 'Unused'}
+                        <Badge
+                          variant={keyword.is_used ? "default" : "secondary"}
+                        >
+                          {keyword.is_used ? "Used" : "Unused"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -359,8 +519,8 @@ export default function KeywordsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            handleEditKeyword(keyword)
+                            e.stopPropagation();
+                            handleEditKeyword(keyword);
                           }}
                         >
                           Edit
@@ -375,7 +535,7 @@ export default function KeywordsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 function KeywordsPageSkeleton() {
@@ -421,5 +581,5 @@ function KeywordsPageSkeleton() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -6,12 +6,24 @@ import { QueryProvider } from '@/providers/query-provider'
 import { SupabaseProvider } from '@/providers/supabase-provider'
 import { RealtimeProvider } from '@/components/realtime/realtime-provider'
 import { RealtimeStatus } from '@/components/realtime/realtime-status'
+import { Sidebar } from '@/components/layout/sidebar'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter'
+})
 
 export const metadata: Metadata = {
   title: 'Dashboard Frontend PAWA',
   description: 'WordPress Content Management SaaS with Context Engineering & MCP integration',
+  keywords: ['WordPress', 'Content Management', 'SEO', 'Keywords', 'Blog Management'],
+  authors: [{ name: 'PAWA Team' }],
+  openGraph: {
+    title: 'Dashboard Frontend PAWA',
+    description: 'Professional WordPress Content Management System',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({
@@ -20,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -31,8 +43,23 @@ export default function RootLayout({
           <SupabaseProvider>
             <QueryProvider>
               <RealtimeProvider>
-                <div className="min-h-screen bg-background">
-                  {children}
+                <div className="relative min-h-screen bg-background">
+                  {/* Background Effects */}
+                  <div className="fixed inset-0 -z-10">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+                    <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                    <div className="gradient-mesh opacity-30" />
+                  </div>
+                  
+                  {/* Sidebar */}
+                  <Sidebar />
+                  
+                  {/* Main Content */}
+                  <main className="min-h-screen md:pl-[260px] transition-all duration-300">
+                    <div className="relative">
+                      {children}
+                    </div>
+                  </main>
                   
                   {/* Realtime Status - Fixed position */}
                   <div className="fixed bottom-4 right-4 z-50">

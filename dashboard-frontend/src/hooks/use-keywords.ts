@@ -1,385 +1,405 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase, calculateKeywordOpportunityScore } from '@/lib/supabase'
-import { useNotifications } from '@/store/ui-store'
-import type { Database } from '@/types/database'
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type {
+  MainKeyword,
+  KeywordVariation,
+  KeywordWithVariations,
+  KeywordSearchFilters,
+  PaginatedResponse,
+  DatabaseInsert,
+  DatabaseUpdate,
+  SemanticSearchRequest,
+  SemanticSearchResult,
+} from "@/types/database";
+import { toast } from "sonner";
 
-type MainKeyword = Database['public']['Tables']['main_keywords']['Row']
-type KeywordVariation = Database['public']['Tables']['keyword_variations']['Row']
-type KeywordOpportunity = Database['public']['Views']['keyword_opportunities']['Row']
-type MainKeywordInsert = Database['public']['Tables']['main_keywords']['Insert']
-type KeywordVariationInsert = Database['public']['Tables']['keyword_variations']['Insert']
-
-export const KEYWORD_QUERY_KEYS = {
-  all: ['keywords'] as const,
-  main: (blogId: string) => [...KEYWORD_QUERY_KEYS.all, 'main', blogId] as const,
-  variations: (mainKeywordId: string) => [...KEYWORD_QUERY_KEYS.all, 'variations', mainKeywordId] as const,
-  opportunities: (blogId: string) => [...KEYWORD_QUERY_KEYS.all, 'opportunities', blogId] as const,
-  detail: (id: string) => [...KEYWORD_QUERY_KEYS.all, 'detail', id] as const,
-} as const
-
-export function useMainKeywords(blogId: string) {
-  const { addNotification } = useNotifications()
-
+export function useKeywords(filters?: KeywordSearchFilters) {
   return useQuery({
-    queryKey: KEYWORD_QUERY_KEYS.main(blogId),
-    queryFn: async (): Promise<MainKeyword[]> => {
-      const { data, error } = await supabase
-        .from('main_keywords')
-        .select('*')
-        .eq('blog_id', blogId)
-        .order('created_at', { ascending: false })
+    queryKey: ["keywords", filters],
+    queryFn: async (): Promise<PaginatedResponse<MainKeyword>> => {
+      let query = supabase
+        .from("main_keywords")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false });
 
-      if (error) {
-        throw new Error(error.message)
+      if (filters?.blog_id) {
+        query = query.eq("blog_id", filters.blog_id);
+      }
+      if (filters?.search) {
+        query = query.ilike("keyword", `%${filters.search}%`);
+      }
+      if (filters?.competition) {
+        query = query.eq("competition", filters.competition);
+      }
+      if (filters?.search_intent) {
+        query = query.eq("search_intent", filters.search_intent);
+      }
+      if (filters?.min_msv !== undefined) {
+        query = query.gte("msv", filters.min_msv);
+      }
+      if (filters?.max_msv !== undefined) {
+        query = query.lte("msv", filters.max_msv);
+      }
+      if (filters?.min_difficulty !== undefined) {
+        query = query.gte("kw_difficulty", filters.min_difficulty);
+      }
+      if (filters?.max_difficulty !== undefined) {
+        query = query.lte("kw_difficulty", filters.max_difficulty);
+      }
+      if (filters?.is_used !== undefined) {
+        query = query.eq("is_used", filters.is_used);
+      }
+      if (filters?.location) {
+        query = query.eq("location", filters.location);
+      }
+      if (filters?.language) {
+        query = query.eq("language", filters.language);
       }
 
-      return data
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      return {
+        data: data || [],
+        count: count || 0,
+        page: 1,
+        per_page: data?.length || 0,
+        total_pages: 1,
+      };
     },
-    enabled: !!blogId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch keywords',
-        message: error.message,
-      })
+  });
+}
+
+export function useKeyword(id: string) {
+  return useQuery({
+    queryKey: ["keyword", id],
+    queryFn: async (): Promise<KeywordWithVariations> => {
+      const { data, error } = await supabase
+        .from("main_keywords")
+        .select(
+          `
+          *,
+          variations:keyword_variations(*),
+          serp_results(*),
+          clusters:keyword_clusters(*)
+        `
+        )
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return data;
     },
-  })
+    enabled: !!id,
+  });
 }
 
 export function useKeywordVariations(mainKeywordId: string) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
-    queryKey: KEYWORD_QUERY_KEYS.variations(mainKeywordId),
+    queryKey: ["keyword-variations", mainKeywordId],
     queryFn: async (): Promise<KeywordVariation[]> => {
       const { data, error } = await supabase
-        .from('keyword_variations')
-        .select('*')
-        .eq('main_keyword_id', mainKeywordId)
-        .order('created_at', { ascending: false })
+        .from("keyword_variations")
+        .select("*")
+        .eq("main_keyword_id", mainKeywordId)
+        .order("msv", { ascending: false });
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!mainKeywordId,
-    staleTime: 2 * 60 * 1000,
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch keyword variations',
-        message: error.message,
-      })
-    },
-  })
+  });
 }
 
-export function useKeywordOpportunities(blogId: string) {
-  const { addNotification } = useNotifications()
-
-  return useQuery({
-    queryKey: KEYWORD_QUERY_KEYS.opportunities(blogId),
-    queryFn: async (): Promise<KeywordOpportunity[]> => {
-      // First get the blog name
-      const { data: blogData, error: blogError } = await supabase
-        .from('blogs')
-        .select('name')
-        .eq('id', blogId)
-        .single()
-
-      if (blogError) {
-        throw new Error(blogError.message)
-      }
-
-      const { data, error } = await supabase
-        .from('keyword_opportunities')
-        .select('*')
-        .eq('blog_name', blogData.name)
-        .order('opportunity_score', { ascending: false })
-        .limit(100)
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
-    },
-    enabled: !!blogId,
-    staleTime: 5 * 60 * 1000, // 5 minutes for opportunities
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch keyword opportunities',
-        message: error.message,
-      })
-    },
-  })
-}
-
-export function useCreateMainKeyword() {
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
+export function useCreateKeyword() {
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (keyword: MainKeywordInsert): Promise<MainKeyword> => {
+    mutationFn: async (keyword: DatabaseInsert<MainKeyword>) => {
       const { data, error } = await supabase
-        .from('main_keywords')
+        .from("main_keywords")
         .insert(keyword)
         .select()
-        .single()
+        .single();
 
-      if (error) {
-        throw new Error(error.message)
-      }
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["keywords"] });
+      toast.success("Keyword criada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar keyword: ${error.message}`);
+    },
+  });
+}
 
-      return data
+export function useUpdateKeyword() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...updates
+    }: DatabaseUpdate<MainKeyword> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("main_keywords")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.main(data.blog_id) })
-      queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.opportunities(data.blog_id) })
-      addNotification({
-        type: 'success',
-        title: 'Keyword created',
-        message: `Successfully created keyword: ${data.keyword}`,
-      })
+      queryClient.invalidateQueries({ queryKey: ["keywords"] });
+      queryClient.invalidateQueries({ queryKey: ["keyword", data.id] });
+      toast.success("Keyword atualizada com sucesso!");
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to create keyword',
-        message: error.message,
-      })
+    onError: (error) => {
+      toast.error(`Erro ao atualizar keyword: ${error.message}`);
     },
-  })
+  });
+}
+
+export function useDeleteKeyword() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("main_keywords")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["keywords"] });
+      toast.success("Keyword removida com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao remover keyword: ${error.message}`);
+    },
+  });
 }
 
 export function useCreateKeywordVariation() {
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (variation: KeywordVariationInsert): Promise<KeywordVariation> => {
+    mutationFn: async (variation: DatabaseInsert<KeywordVariation>) => {
       const { data, error } = await supabase
-        .from('keyword_variations')
+        .from("keyword_variations")
         .insert(variation)
         .select()
-        .single()
+        .single();
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw error;
+      return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ 
-        queryKey: KEYWORD_QUERY_KEYS.variations(data.main_keyword_id) 
-      })
-      addNotification({
-        type: 'success',
-        title: 'Keyword variation created',
-        message: `Successfully created variation: ${data.keyword}`,
-      })
+      queryClient.invalidateQueries({ queryKey: ["keyword-variations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["keyword", data.main_keyword_id],
+      });
+      toast.success("Variação criada com sucesso!");
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to create keyword variation',
-        message: error.message,
-      })
+    onError: (error) => {
+      toast.error(`Erro ao criar variação: ${error.message}`);
     },
-  })
+  });
 }
 
-export function useUpdateMainKeyword() {
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
+export function useBulkCreateKeywords() {
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      id, 
-      updates 
-    }: { 
-      id: string; 
-      updates: Partial<MainKeyword> 
-    }): Promise<MainKeyword> => {
+    mutationFn: async (keywords: DatabaseInsert<MainKeyword>[]) => {
       const { data, error } = await supabase
-        .from('main_keywords')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single()
+        .from("main_keywords")
+        .insert(keywords)
+        .select();
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw error;
+      return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.main(data.blog_id) })
-      queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.opportunities(data.blog_id) })
-      queryClient.setQueryData(KEYWORD_QUERY_KEYS.detail(data.id), data)
-      addNotification({
-        type: 'success',
-        title: 'Keyword updated',
-        message: `Successfully updated: ${data.keyword}`,
-      })
+      queryClient.invalidateQueries({ queryKey: ["keywords"] });
+      toast.success(`${data.length} keywords criadas com sucesso!`);
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to update keyword',
-        message: error.message,
-      })
+    onError: (error) => {
+      toast.error(`Erro ao criar keywords: ${error.message}`);
     },
-  })
+  });
 }
 
-export function useDeleteMainKeyword() {
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
-
+export function useSemanticKeywordSearch() {
   return useMutation({
-    mutationFn: async (id: string): Promise<{ id: string; blogId: string }> => {
-      // First get the keyword to know which blog to invalidate
-      const { data: keyword, error: fetchError } = await supabase
-        .from('main_keywords')
-        .select('blog_id')
-        .eq('id', id)
-        .single()
+    mutationFn: async (
+      request: SemanticSearchRequest
+    ): Promise<SemanticSearchResult<KeywordVariation>[]> => {
+      // First, generate embedding for the query
+      const embeddingResponse = await fetch("/api/embeddings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: request.query }),
+      });
 
-      if (fetchError) {
-        throw new Error(fetchError.message)
+      if (!embeddingResponse.ok) {
+        throw new Error("Failed to generate embedding");
       }
 
-      const { error } = await supabase
-        .from('main_keywords')
-        .delete()
-        .eq('id', id)
+      const { embedding } = await embeddingResponse.json();
 
-      if (error) {
-        throw new Error(error.message)
+      // Then use Supabase function for similarity search
+      const { data, error } = await supabase.rpc("find_similar_keywords", {
+        query_embedding: embedding,
+        match_threshold: request.similarity_threshold || 0.5,
+        match_count: request.limit || 10,
+        blog_id: request.filters?.blog_id,
+      });
+
+      if (error) throw error;
+
+      return data.map((item: any, index: number) => ({
+        item,
+        similarity: item.similarity,
+        rank: index + 1,
+      }));
+    },
+    onError: (error) => {
+      toast.error(`Erro na busca semântica: ${error.message}`);
+    },
+  });
+}
+
+export function useKeywordStats(blogId?: string) {
+  return useQuery({
+    queryKey: ["keyword-stats", blogId],
+    queryFn: async () => {
+      let query = supabase.from("main_keywords").select("*");
+
+      if (blogId) {
+        query = query.eq("blog_id", blogId);
       }
 
-      return { id, blogId: keyword.blog_id }
+      const { data: keywords, error } = await query;
+
+      if (error) throw error;
+
+      const stats = {
+        total: keywords.length,
+        byCompetition: {
+          LOW: keywords.filter((k) => k.competition === "LOW").length,
+          MEDIUM: keywords.filter((k) => k.competition === "MEDIUM").length,
+          HIGH: keywords.filter((k) => k.competition === "HIGH").length,
+        },
+        byIntent: {
+          informational: keywords.filter(
+            (k) => k.search_intent === "informational"
+          ).length,
+          navigational: keywords.filter(
+            (k) => k.search_intent === "navigational"
+          ).length,
+          commercial: keywords.filter((k) => k.search_intent === "commercial")
+            .length,
+          transactional: keywords.filter(
+            (k) => k.search_intent === "transactional"
+          ).length,
+        },
+        used: keywords.filter((k) => k.is_used).length,
+        avgMsv:
+          keywords.reduce((sum, k) => sum + (k.msv || 0), 0) / keywords.length,
+        avgDifficulty:
+          keywords.reduce((sum, k) => sum + (k.kw_difficulty || 0), 0) /
+          keywords.length,
+        avgCpc:
+          keywords.reduce((sum, k) => sum + (k.cpc || 0), 0) / keywords.length,
+      };
+
+      return stats;
     },
-    onSuccess: ({ id, blogId }) => {
-      queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.main(blogId) })
-      queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.opportunities(blogId) })
-      queryClient.removeQueries({ queryKey: KEYWORD_QUERY_KEYS.detail(id) })
-      addNotification({
-        type: 'success',
-        title: 'Keyword deleted',
-        message: 'Keyword has been successfully deleted',
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to delete keyword',
-        message: error.message,
-      })
-    },
-  })
+  });
 }
 
 export function useMarkKeywordAsUsed() {
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      id, 
-      isUsed 
-    }: { 
-      id: string; 
-      isUsed: boolean 
-    }): Promise<MainKeyword> => {
+    mutationFn: async (id: string) => {
       const { data, error } = await supabase
-        .from('main_keywords')
-        .update({ is_used: isUsed })
-        .eq('id', id)
+        .from("main_keywords")
+        .update({ is_used: true })
+        .eq("id", id)
         .select()
-        .single()
+        .single();
 
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data
+      if (error) throw error;
+      return data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.main(data.blog_id) })
-      queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.opportunities(data.blog_id) })
-      addNotification({
-        type: 'success',
-        title: 'Keyword status updated',
-        message: `Keyword marked as ${data.is_used ? 'used' : 'unused'}`,
-      })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["keywords"] });
+      toast.success("Keyword marcada como usada!");
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to update keyword status',
-        message: error.message,
-      })
+    onError: (error) => {
+      toast.error(`Erro ao marcar keyword: ${error.message}`);
     },
-  })
+  });
 }
 
-export function useKeywordOpportunityScore(keyword: MainKeyword) {
-  return useQuery({
-    queryKey: ['keyword-opportunity-score', keyword.id],
-    queryFn: () => calculateKeywordOpportunityScore(
-      keyword.msv,
-      keyword.kw_difficulty,
-      keyword.cpc
-    ),
-    enabled: !!(keyword.msv && keyword.kw_difficulty && keyword.cpc),
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  })
-}
+/* ---------------------------------------------------------------------------
+ * HOOKS DE ALTO NÍVEL UTILIZADOS NA UI
+ * ------------------------------------------------------------------------ */
 
-export function useKeywordRealtime(blogId: string) {
-  const queryClient = useQueryClient()
+/**
+ * Retorna todas as main_keywords de um blog específico.
+ * Simplificação para a UI que precisa apenas de um array direto.
+ */
+export function useMainKeywords(blogId?: string) {
+  const { data, ...rest } = useKeywords({ blog_id: blogId });
 
+  // Adapta para o formato esperado (array ou undefined)
   return {
-    subscribe: () => {
-      const channel = supabase
-        .channel('keywords_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'main_keywords',
-            filter: `blog_id=eq.${blogId}`,
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.main(blogId) })
-            queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.opportunities(blogId) })
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'keyword_variations',
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: KEYWORD_QUERY_KEYS.all })
-          }
-        )
-        .subscribe()
+    data: data?.data,
+    ...rest,
+  };
+}
 
-      return () => {
-        supabase.removeChannel(channel)
+/**
+ * Retorna oportunidades de keywords calculadas pela view `keyword_opportunities`.
+ * Filtra opcionalmente por blog (usando blog_name via subquery) caso blogId seja informado.
+ */
+export function useKeywordOpportunities(blogId?: string) {
+  return useQuery({
+    queryKey: ["keyword-opportunities", blogId],
+    queryFn: async () => {
+      let query = supabase.from("keyword_opportunities").select("*");
+
+      if (blogId) {
+        // Obter nome do blog para filtrar pela view (que contém blog_name, não blog_id)
+        const { data: blogRow, error: blogError } = await supabase
+          .from("blogs")
+          .select("name")
+          .eq("id", blogId)
+          .single();
+
+        if (blogError) throw blogError;
+
+        if (blogRow?.name) {
+          query = query.eq("blog_name", blogRow.name);
+        }
       }
-    }
-  }
+
+      const { data, error } = await query.order("opportunity_score", {
+        ascending: false,
+      });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
 }
