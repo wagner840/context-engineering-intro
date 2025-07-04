@@ -1,0 +1,52 @@
+# Coolify deployment configuration
+# This file configures the dashboard-frontend deployment on Coolify
+
+version: "3.8"
+
+services:
+  dashboard-frontend:
+    image: ghcr.io/username/dashboard-frontend:latest
+    container_name: dashboard-frontend
+    restart: unless-stopped
+    
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - EINSOF7_WORDPRESS_URL=${EINSOF7_WORDPRESS_URL}
+      - EINSOF7_WORDPRESS_USERNAME=${EINSOF7_WORDPRESS_USERNAME}
+      - EINSOF7_WORDPRESS_PASSWORD=${EINSOF7_WORDPRESS_PASSWORD}
+      - OPETMIL_WORDPRESS_URL=${OPETMIL_WORDPRESS_URL}
+      - OPETMIL_WORDPRESS_USERNAME=${OPETMIL_WORDPRESS_USERNAME}
+      - OPETMIL_WORDPRESS_PASSWORD=${OPETMIL_WORDPRESS_PASSWORD}
+      - N8N_API_URL=${N8N_API_URL}
+      - N8N_API_KEY=${N8N_API_KEY}
+    
+    # Port mapping
+    ports:
+      - "3000:3000"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Labels for Coolify
+    labels:
+      - "coolify.managed=true"
+      - "coolify.version=v4"
+      - "coolify.type=application"
+      - "coolify.name=dashboard-frontend"
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard-frontend.rule=Host(`dashboard.yourdomain.com`)"
+      - "traefik.http.routers.dashboard-frontend.tls=true"
+      - "traefik.http.routers.dashboard-frontend.tls.certresolver=letsencrypt"
+
+networks:
+  default:
+    external:
+      name: coolify

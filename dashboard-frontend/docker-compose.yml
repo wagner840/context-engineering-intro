@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  dashboard-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - EINSOF7_WORDPRESS_URL=${EINSOF7_WORDPRESS_URL}
+      - EINSOF7_WORDPRESS_USERNAME=${EINSOF7_WORDPRESS_USERNAME}
+      - EINSOF7_WORDPRESS_PASSWORD=${EINSOF7_WORDPRESS_PASSWORD}
+      - OPETMIL_WORDPRESS_URL=${OPETMIL_WORDPRESS_URL}
+      - OPETMIL_WORDPRESS_USERNAME=${OPETMIL_WORDPRESS_USERNAME}
+      - OPETMIL_WORDPRESS_PASSWORD=${OPETMIL_WORDPRESS_PASSWORD}
+      - N8N_API_URL=${N8N_API_URL}
+      - N8N_API_KEY=${N8N_API_KEY}
+    volumes:
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  default:
+    external:
+      name: coolify
