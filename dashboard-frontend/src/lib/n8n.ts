@@ -1,4 +1,4 @@
-import type { N8nWorkflow, N8nExecution, N8nCredential, N8nNode, N8nConnection } from '@/types/n8n'
+import type { N8nWorkflow, N8nExecution, N8nCredential } from '@/types/n8n'
 
 export class N8nApiClient {
   private baseUrl: string
@@ -277,26 +277,85 @@ export class N8nAPI {
   }
 
   // Delegate all methods to the client
-  getWorkflows = this.client.getWorkflows.bind(this.client)
-  getWorkflow = this.client.getWorkflow.bind(this.client)
-  createWorkflow = this.client.createWorkflow.bind(this.client)
-  updateWorkflow = this.client.updateWorkflow.bind(this.client)
-  deleteWorkflow = this.client.deleteWorkflow.bind(this.client)
-  activateWorkflow = this.client.activateWorkflow.bind(this.client)
-  deactivateWorkflow = this.client.deactivateWorkflow.bind(this.client)
-  executeWorkflow = this.client.executeWorkflow.bind(this.client)
-  getExecution = this.client.getExecution.bind(this.client)
-  getExecutions = this.client.getExecutions.bind(this.client)
-  stopExecution = this.client.stopExecution.bind(this.client)
-  retryExecution = this.client.retryExecution.bind(this.client)
-  deleteExecution = this.client.deleteExecution.bind(this.client)
-  getCredentials = this.client.getCredentials.bind(this.client)
-  createCredential = this.client.createCredential.bind(this.client)
-  getHealth = this.client.getHealth.bind(this.client)
-  getActiveWebhooks = this.client.getActiveWebhooks.bind(this.client)
-  testWebhook = this.client.testWebhook.bind(this.client)
-  getWorkflowStatus = this.client.getWorkflowStatus.bind(this.client)
-  getWorkflowPerformanceMetrics = this.client.getWorkflowPerformanceMetrics.bind(this.client)
+  getWorkflows() {
+    return this.client.getWorkflows()
+  }
+  
+  getWorkflow(id: string) {
+    return this.client.getWorkflow(id)
+  }
+  
+  createWorkflow(workflow: any) {
+    return this.client.createWorkflow(workflow)
+  }
+  
+  updateWorkflow(id: string, workflow: any) {
+    return this.client.updateWorkflow(id, workflow)
+  }
+  
+  deleteWorkflow(id: string) {
+    return this.client.deleteWorkflow(id)
+  }
+  
+  activateWorkflow(id: string) {
+    return this.client.activateWorkflow(id)
+  }
+  
+  deactivateWorkflow(id: string) {
+    return this.client.deactivateWorkflow(id)
+  }
+  
+  executeWorkflow(id: string, inputData?: any) {
+    return this.client.executeWorkflow(id, inputData)
+  }
+  
+  getExecution(id: string) {
+    return this.client.getExecution(id)
+  }
+  
+  getExecutions(filters?: any) {
+    return this.client.getExecutions(filters)
+  }
+  
+  stopExecution(id: string) {
+    return this.client.stopExecution(id)
+  }
+  
+  retryExecution(id: string) {
+    return this.client.retryExecution(id)
+  }
+  
+  deleteExecution(id: string) {
+    return this.client.deleteExecution(id)
+  }
+  
+  getCredentials() {
+    return this.client.getCredentials()
+  }
+  
+  createCredential(credential: any) {
+    return this.client.createCredential(credential)
+  }
+  
+  getHealth() {
+    return this.client.getHealth()
+  }
+  
+  getActiveWebhooks() {
+    return this.client.getActiveWebhooks()
+  }
+  
+  testWebhook(workflowId: string, webhookId: string, data: any) {
+    return this.client.testWebhook(workflowId, webhookId, data)
+  }
+  
+  getWorkflowStatus(id: string) {
+    return this.client.getWorkflowStatus(id)
+  }
+  
+  getWorkflowPerformanceMetrics(id: string) {
+    return this.client.getWorkflowPerformanceMetrics(id)
+  }
 
   // Additional methods for waiting for execution
   async waitForExecution(id: string, timeout: number = 30000): Promise<N8nExecution> {

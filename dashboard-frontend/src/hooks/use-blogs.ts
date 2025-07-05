@@ -70,9 +70,6 @@ export function useCreateBlog() {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
       toast.success("Blog criado com sucesso!");
     },
-    onError: (error) => {
-      toast.error(`Erro ao criar blog: ${error.message}`);
-    },
   });
 }
 
@@ -99,9 +96,6 @@ export function useUpdateBlog() {
       queryClient.invalidateQueries({ queryKey: ["blog", data.id] });
       toast.success("Blog atualizado com sucesso!");
     },
-    onError: (error) => {
-      toast.error(`Erro ao atualizar blog: ${error.message}`);
-    },
   });
 }
 
@@ -117,9 +111,6 @@ export function useDeleteBlog() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
       toast.success("Blog removido com sucesso!");
-    },
-    onError: (error) => {
-      toast.error(`Erro ao remover blog: ${error.message}`);
     },
   });
 }

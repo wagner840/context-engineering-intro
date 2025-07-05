@@ -9,36 +9,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatNumber, formatCurrency } from "@/lib/utils";
 import {
-  LayoutDashboard,
   Globe,
   Target,
   FileText,
   TrendingUp,
-  Users,
-  BarChart3,
   Activity,
   ArrowUp,
   ArrowDown,
   DollarSign,
   Eye,
-  Clock,
-  Zap,
   Database,
   RefreshCw,
+  BarChart3,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -46,7 +37,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { useDashboardCounts } from "@/hooks/use-dashboard-counts";
@@ -59,6 +49,10 @@ const defaultStats = {
   totalPosts: 0,
   publishedPosts: 0,
   totalOpportunities: 0,
+  avgMsv: 0,
+  avgDifficulty: 0,
+  avgCpc: 0,
+  conversionRate: 0,
 };
 
 // Dados para gráficos
@@ -77,23 +71,21 @@ const keywordDistribution = [
   { name: "Baixa Competição", value: 350, color: "#10b981" },
 ];
 
-const contentPerformance = [
-  { name: "Publicados", posts: 67, engagement: 85 },
-  { name: "Rascunhos", posts: 22, engagement: 0 },
-  { name: "Agendados", posts: 12, engagement: 0 },
-  { name: "Em Revisão", posts: 8, engagement: 0 },
-];
 
 export function ExecutiveDashboard() {
   const { data: counts, isLoading: countsLoading } = useDashboardCounts();
   const isLoading = countsLoading;
   const stats = counts
     ? {
-        totalBlogs: counts.total_blogs || 0,
-        totalKeywords: counts.total_keywords || 0,
-        totalPosts: counts.total_posts || 0,
+        totalBlogs: counts?.total_blogs || 0,
+        totalKeywords: counts?.total_keywords || 0,
+        totalPosts: counts?.total_posts || 0,
         publishedPosts: 0, // TODO: adicionar view com posts publicados
-        totalOpportunities: counts.total_opportunities || 0,
+        totalOpportunities: counts?.total_opportunities || 0,
+        avgMsv: counts?.avg_msv || 0,
+        avgDifficulty: counts?.avg_difficulty || 0,
+        avgCpc: counts?.avg_cpc || 0,
+        conversionRate: counts?.conversion_rate || 0,
       }
     : defaultStats;
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
@@ -114,7 +106,7 @@ export function ExecutiveDashboard() {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100,
       },
     },
@@ -310,25 +302,25 @@ export function ExecutiveDashboard() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <PerformanceMetric
                 label="Volume de Busca Médio"
-                value={formatNumber(stats.avgMsv)}
+                value={formatNumber(stats.avgMsv || 0)}
                 icon={Eye}
                 color="primary"
               />
               <PerformanceMetric
                 label="Dificuldade Média"
-                value={`${stats.avgDifficulty}%`}
+                value={`${stats.avgDifficulty || 0}%`}
                 icon={Activity}
                 color="warning"
               />
               <PerformanceMetric
                 label="CPC Médio"
-                value={formatCurrency(stats.avgCpc)}
+                value={formatCurrency(stats.avgCpc || 0)}
                 icon={DollarSign}
                 color="success"
               />
               <PerformanceMetric
                 label="Taxa de Conversão"
-                value={`${stats.conversionRate}%`}
+                value={`${stats.conversionRate || 0}%`}
                 icon={TrendingUp}
                 color="info"
               />

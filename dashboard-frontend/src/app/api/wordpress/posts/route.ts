@@ -52,9 +52,9 @@ export async function GET(request: NextRequest) {
     
     try {
       const posts = await wp.getPosts({
-        status,
+        status: (status as 'publish' | 'draft' | 'private' | 'pending') || undefined,
         per_page: limit,
-        offset,
+        page: Math.floor(offset / limit) + 1,
       })
       
       return NextResponse.json({ data: posts })
@@ -105,9 +105,11 @@ export async function POST(request: NextRequest) {
         categories: validatedData.categories,
         tags: validatedData.tags,
         featured_media: validatedData.featured_image_url,
-        yoast_head_title: validatedData.meta_title,
-        yoast_head_description: validatedData.meta_description,
-      })
+        meta: {
+          yoast_head_title: validatedData.meta_title,
+          yoast_head_description: validatedData.meta_description,
+        }
+      } as Record<string, unknown>)
       
       // Save to database
       const { data: dbPost, error: dbError } = await supabase
@@ -119,7 +121,6 @@ export async function POST(request: NextRequest) {
           excerpt: validatedData.excerpt,
           status: validatedData.status,
           wordpress_id: wpPost.id,
-          wordpress_url: wpPost.link,
           target_keywords: validatedData.target_keywords,
           meta_title: validatedData.meta_title,
           meta_description: validatedData.meta_description,
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: { ...dbPost, wordpress_data: wpPost } }, { status: 201 })
     } catch (wpError) {
       return NextResponse.json(
-        { error: 'Failed to create WordPress post', details: wpError },
+        { error: 'Failed to create WordPress post', details: wpError as Error },
         { status: 500 }
       )
     }

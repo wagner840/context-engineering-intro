@@ -49,15 +49,11 @@ export interface N8nNode {
   continueOnFail?: boolean
 }
 
-export interface N8nConnection {
-  [key: string]: {
-    [key: string]: Array<{
-      node: string
-      type: string
-      index: number
-    }>
-  }
-}
+export type N8nConnection = Array<{
+  from: string
+  to: string
+  type: string
+}>
 
 export interface N8nExecution {
   id: string

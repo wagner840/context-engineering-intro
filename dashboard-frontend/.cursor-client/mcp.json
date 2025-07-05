@@ -1,45 +1,23 @@
 {
   "mcpServers": {
     "supabase": {
-      "command": "cmd",
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "-y",
         "@supabase/mcp-server-supabase@latest",
-        "--access-token",
-        "sbp_v0_42109cc1ab84a49bf2c2aeeda09bfb270edb3f85"
-      ]
-    },
-    "Magic MCP": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@21st-dev/magic@latest",
-        "API_KEY=\"a20624326cec3947170b10f05246343aa3f3e00d5fe95aa4a6bb43f51bf3496b\""
+        "--read-only",
+        "--project-ref=wayzhnpwphekjuznwqnr"
       ],
-      "env": {}
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_v0_42109cc1ab84a49bf2c2aeeda09bfb270edb3f85"
+      }
     },
-    "playwright": {
+    "shadcn-ui": {
       "command": "npx",
-      "args": ["@playwright/mcp@latest"]
-    },
-    "context7": {
-      "url": "https://mcp.context7.com/mcp"
-    },
-    "Sentry": {
-      "command": "npx",
-      "args": ["mcp-remote@latest", "https://mcp.sentry.dev/sse"]
-    },
-    "shadcn-ui-server": {
-      "command": "npx",
-      "args": ["@heilgar/shadcn-ui-mcp-server"]
-    },
-    "mcp-server-chart": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@antv/mcp-server-chart"]
+      "args": ["@jpisnice/shadcn-ui-mcp-server"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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e"
+      }
     }
   }
 }

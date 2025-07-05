@@ -13,8 +13,6 @@ export const AUTOMATION_QUERY_KEYS = {
 } as const
 
 export function useWorkflows() {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: AUTOMATION_QUERY_KEYS.workflows(),
     queryFn: async (): Promise<N8nWorkflow[]> => {
@@ -26,19 +24,10 @@ export function useWorkflows() {
       }
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch workflows',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function useWorkflow(id: string) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: AUTOMATION_QUERY_KEYS.workflow(id),
     queryFn: async (): Promise<N8nWorkflow> => {
@@ -51,46 +40,30 @@ export function useWorkflow(id: string) {
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch workflow',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function useExecutions(filters?: N8nExecutionFilter) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: AUTOMATION_QUERY_KEYS.executions(filters),
     queryFn: async () => {
       try {
         const client = getN8nClient()
+        const { status, ...otherFilters } = filters || {}
         return await client.getExecutions({
           limit: 50,
-          ...filters,
+          status: status && status !== 'waiting' ? status : undefined,
+          ...otherFilters,
         })
       } catch (error) {
         throw new Error(`Failed to fetch executions: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     },
     staleTime: 1 * 60 * 1000, // 1 minute
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch executions',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function useExecution(id: string) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: AUTOMATION_QUERY_KEYS.execution(id),
     queryFn: async (): Promise<N8nExecution> => {
@@ -103,13 +76,6 @@ export function useExecution(id: string) {
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch execution',
-        message: error.message,
-      })
-    },
   })
 }
 
@@ -127,6 +93,55 @@ export function useN8nHealth() {
     staleTime: 30 * 1000, // 30 seconds
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  })
+}
+
+export function useUpdateWorkflow() {
+  const queryClient = useQueryClient()
+  const { addNotification } = useNotifications()
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<N8nWorkflow> }): Promise<N8nWorkflow> => {
+      try {
+        const client = getN8nClient()
+        return await client.updateWorkflow(id, data)
+      } catch (error) {
+        throw new Error(`Failed to update workflow: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: AUTOMATION_QUERY_KEYS.workflows() })
+      queryClient.setQueryData(AUTOMATION_QUERY_KEYS.workflow(data.id), data)
+      addNotification({
+        type: 'success',
+        title: 'Workflow updated',
+        message: `${data.name} has been updated`,
+      })
+    },
+  })
+}
+
+export function useCreateWorkflow() {
+  const queryClient = useQueryClient()
+  const { addNotification } = useNotifications()
+
+  return useMutation({
+    mutationFn: async (data: Partial<N8nWorkflow>): Promise<N8nWorkflow> => {
+      try {
+        const client = getN8nClient()
+        return await client.createWorkflow(data)
+      } catch (error) {
+        throw new Error(`Failed to create workflow: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: AUTOMATION_QUERY_KEYS.workflows() })
+      addNotification({
+        type: 'success',
+        title: 'Workflow created',
+        message: `${data.name} has been created`,
+      })
+    },
   })
 }
 
@@ -150,13 +165,6 @@ export function useActivateWorkflow() {
         type: 'success',
         title: 'Workflow activated',
         message: `${data.name} is now active`,
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to activate workflow',
-        message: error.message,
       })
     },
   })
@@ -184,13 +192,6 @@ export function useDeactivateWorkflow() {
         message: `${data.name} is now inactive`,
       })
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to deactivate workflow',
-        message: error.message,
-      })
-    },
   })
 }
 
@@ -204,7 +205,7 @@ export function useExecuteWorkflow() {
       inputData 
     }: { 
       workflowId: string; 
-      inputData?: any 
+      inputData?: Record<string, unknown> 
     }): Promise<N8nExecution> => {
       try {
         const client = getN8nClient()
@@ -213,19 +214,12 @@ export function useExecuteWorkflow() {
         throw new Error(`Failed to execute workflow: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AUTOMATION_QUERY_KEYS.executions() })
       addNotification({
         type: 'success',
         title: 'Workflow executed',
         message: 'Workflow execution started successfully',
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to execute workflow',
-        message: error.message,
       })
     },
   })
@@ -251,8 +245,6 @@ export function useWorkflowStats(workflowId: string) {
 }
 
 export function useWorkflowPerformance(workflowId: string, days = 7) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: ['workflow-performance', workflowId, days],
     queryFn: async () => {
@@ -265,13 +257,6 @@ export function useWorkflowPerformance(workflowId: string, days = 7) {
     },
     enabled: !!workflowId,
     staleTime: 5 * 60 * 1000,
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch workflow performance',
-        message: error.message,
-      })
-    },
   })
 }
 

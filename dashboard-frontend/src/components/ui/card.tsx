@@ -111,7 +111,7 @@ export const AnimatedCard = React.forwardRef<
     delay?: number
     animateOnce?: boolean
   }
->(({ className, delay = 0, animateOnce = true, ...props }, ref) => {
+>(({ className, delay = 0, animateOnce = true, ...props }) => {
   const [hasAnimated, setHasAnimated] = React.useState(false)
   const cardRef = React.useRef<HTMLDivElement>(null)
 

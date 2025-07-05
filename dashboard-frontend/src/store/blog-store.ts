@@ -15,7 +15,7 @@ interface BlogState {
   
   // Actions
   fetchBlogs: () => Promise<void>
-  selectBlog: (blog: Blog) => void
+  selectBlog: (blog: Blog | null | undefined) => void
   createBlog: (blog: BlogInsert) => Promise<Blog>
   updateBlog: (id: string, updates: BlogUpdate) => Promise<Blog>
   deleteBlog: (id: string) => Promise<void>
@@ -59,7 +59,7 @@ export const useBlogStore = create<BlogState>()(
         },
 
         selectBlog: (blog) => {
-          set({ selectedBlog: blog })
+          set({ selectedBlog: blog || null })
         },
 
         createBlog: async (blog) => {

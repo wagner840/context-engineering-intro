@@ -6,11 +6,6 @@ import { cn } from '@/lib/utils'
 import { 
   LayoutDashboard, 
   Globe, 
-  Target, 
-  FileText, 
-  TrendingUp, 
-  Search, 
-  Settings 
 } from 'lucide-react'
 
 const navigation = [

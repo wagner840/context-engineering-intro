@@ -5,8 +5,9 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { cn } from "@/lib/utils";
 
-interface CalendarProps extends React.ComponentProps<typeof DayPicker> {
+interface CalendarProps {
   className?: string;
+  [key: string]: any;
 }
 
 export function Calendar({ className, ...props }: CalendarProps) {

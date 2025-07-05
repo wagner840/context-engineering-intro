@@ -7,6 +7,7 @@ import { SupabaseProvider } from '@/providers/supabase-provider'
 import { RealtimeProvider } from '@/components/realtime/realtime-provider'
 import { RealtimeStatus } from '@/components/realtime/realtime-status'
 import { Sidebar } from '@/components/layout/sidebar'
+import { BlogSelector } from '@/components/dashboard/blog-selector'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -57,6 +58,12 @@ export default function RootLayout({
                   {/* Main Content */}
                   <main className="min-h-screen md:pl-[260px] transition-all duration-300">
                     <div className="relative">
+                      {/* Mobile Header Space */}
+                      <div className="h-16 md:hidden" />
+                      {/* Seletor de Blog minimalista, topo direito */}
+                      <div className="flex justify-end items-center w-full max-w-5xl mx-auto px-4 pt-2 pb-1">
+                        <BlogSelector />
+                      </div>
                       {children}
                     </div>
                   </main>

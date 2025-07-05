@@ -1,14 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getWordPressClientForBlog, getWordPressClientByDomain } from '@/lib/wordpress'
+import { getWordPressClientForBlog } from '@/lib/wordpress'
 import { useNotifications } from '@/store/ui-store'
-import type { WordPressPost, WordPressCategory, WordPressTag, WordPressMedia } from '@/types/wordpress'
+import type { WordPressPost, WordPressCategory, WordPressTag } from '@/types/wordpress'
 import type { Database } from '@/types/database'
 
 type Blog = Database['public']['Tables']['blogs']['Row']
 
 export function useWordPressPosts(blog: Blog) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: ['wordpress-posts', blog.id],
     queryFn: async () => {
@@ -21,19 +19,10 @@ export function useWordPressPosts(blog: Blog) {
     },
     enabled: !!blog.domain,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'WordPress API Error',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function useWordPressPost(blog: Blog, postId: number) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: ['wordpress-post', blog.id, postId],
     queryFn: async () => {
@@ -46,18 +35,10 @@ export function useWordPressPost(blog: Blog, postId: number) {
     },
     enabled: !!blog.domain && !!postId,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'WordPress API Error',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function useWordPressCategories(blog: Blog) {
-  const { addNotification } = useNotifications()
 
   return useQuery({
     queryKey: ['wordpress-categories', blog.id],
@@ -71,18 +52,10 @@ export function useWordPressCategories(blog: Blog) {
     },
     enabled: !!blog.domain,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'WordPress API Error',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function useWordPressTags(blog: Blog) {
-  const { addNotification } = useNotifications()
 
   return useQuery({
     queryKey: ['wordpress-tags', blog.id],
@@ -96,13 +69,6 @@ export function useWordPressTags(blog: Blog) {
     },
     enabled: !!blog.domain,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'WordPress API Error',
-        message: error.message,
-      })
-    },
   })
 }
 
@@ -120,18 +86,11 @@ export function useCreateWordPressPost(blog: Blog) {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['wordpress-posts', blog.id])
+      queryClient.invalidateQueries({ queryKey: ['wordpress-posts', blog.id] })
       addNotification({
         type: 'success',
         title: 'Post Created',
         message: `Successfully created post: ${data.title.rendered}`,
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to Create Post',
-        message: error.message,
       })
     },
   })
@@ -151,19 +110,12 @@ export function useUpdateWordPressPost(blog: Blog) {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['wordpress-posts', blog.id])
-      queryClient.invalidateQueries(['wordpress-post', blog.id, data.id])
+      queryClient.invalidateQueries({ queryKey: ['wordpress-posts', blog.id] })
+      queryClient.invalidateQueries({ queryKey: ['wordpress-post', blog.id, data.id] })
       addNotification({
         type: 'success',
         title: 'Post Updated',
         message: `Successfully updated post: ${data.title.rendered}`,
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to Update Post',
-        message: error.message,
       })
     },
   })
@@ -183,18 +135,11 @@ export function useDeleteWordPressPost(blog: Blog) {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['wordpress-posts', blog.id])
+      queryClient.invalidateQueries({ queryKey: ['wordpress-posts', blog.id] })
       addNotification({
         type: 'success',
         title: 'Post Deleted',
         message: `Successfully deleted post: ${data.title.rendered}`,
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to Delete Post',
-        message: error.message,
       })
     },
   })
@@ -233,21 +178,14 @@ export function useSyncPostToWordPress(blog: Blog) {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['wordpress-posts', blog.id])
+      queryClient.invalidateQueries({ queryKey: ['wordpress-posts', blog.id] })
       if (data.id) {
-        queryClient.invalidateQueries(['wordpress-post', blog.id, data.id])
+        queryClient.invalidateQueries({ queryKey: ['wordpress-post', blog.id, data.id] })
       }
       addNotification({
         type: 'success',
         title: 'Post Synced',
         message: `Successfully synced post: ${data.title.rendered}`,
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to Sync Post',
-        message: error.message,
       })
     },
   })
@@ -267,18 +205,11 @@ export function useCreateWordPressCategory(blog: Blog) {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['wordpress-categories', blog.id])
+      queryClient.invalidateQueries({ queryKey: ['wordpress-categories', blog.id] })
       addNotification({
         type: 'success',
         title: 'Category Created',
         message: `Successfully created category: ${data.name}`,
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to Create Category',
-        message: error.message,
       })
     },
   })
@@ -298,18 +229,11 @@ export function useCreateWordPressTag(blog: Blog) {
       }
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['wordpress-tags', blog.id])
+      queryClient.invalidateQueries({ queryKey: ['wordpress-tags', blog.id] })
       addNotification({
         type: 'success',
         title: 'Tag Created',
         message: `Successfully created tag: ${data.name}`,
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to Create Tag',
-        message: error.message,
       })
     },
   })
@@ -342,13 +266,6 @@ export function useUploadWordPressMedia(blog: Blog) {
         message: `Successfully uploaded: ${data.title.rendered}`,
       })
     },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to Upload Media',
-        message: error.message,
-      })
-    },
   })
 }
 
@@ -371,13 +288,6 @@ export function useWordPressConnectionTest(blog: Blog) {
         type: 'success',
         title: 'Connection Successful',
         message: `Successfully connected to WordPress site: ${blog.domain}`,
-      })
-    },
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Connection Failed',
-        message: error.message,
       })
     },
   })

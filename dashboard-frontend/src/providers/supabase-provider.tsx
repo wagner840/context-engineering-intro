@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
-import type { Database } from '@/types/database'
 
 type SupabaseContext = {
   supabase: ReturnType<typeof createSupabaseClient>

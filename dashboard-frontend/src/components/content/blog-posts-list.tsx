@@ -14,7 +14,6 @@ import {
   Search, 
   ExternalLink,
   Calendar,
-  User,
   Target
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -26,7 +25,6 @@ interface BlogPost {
   excerpt?: string
   status: 'draft' | 'publish' | 'private'
   wordpress_id?: number
-  wordpress_url?: string
   target_keywords?: string[]
   published_at?: string
   updated_at: string
@@ -64,11 +62,7 @@ export function BlogPostsList({ blogId, initialPosts, currentStatus }: BlogPosts
   }
 
   const handlePreview = (post: BlogPost) => {
-    if (post.wordpress_url) {
-      window.open(post.wordpress_url, '_blank')
-    } else {
-      router.push(`/blogs/${blogId}/posts/${post.id}/preview`)
-    }
+    router.push(`/blogs/${blogId}/posts/${post.id}/preview`)
   }
 
   const handleDelete = async (postId: string) => {

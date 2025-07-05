@@ -130,9 +130,6 @@ export function useCreateKeyword() {
       queryClient.invalidateQueries({ queryKey: ["keywords"] });
       toast.success("Keyword criada com sucesso!");
     },
-    onError: (error) => {
-      toast.error(`Erro ao criar keyword: ${error.message}`);
-    },
   });
 }
 
@@ -159,9 +156,6 @@ export function useUpdateKeyword() {
       queryClient.invalidateQueries({ queryKey: ["keyword", data.id] });
       toast.success("Keyword atualizada com sucesso!");
     },
-    onError: (error) => {
-      toast.error(`Erro ao atualizar keyword: ${error.message}`);
-    },
   });
 }
 
@@ -180,9 +174,6 @@ export function useDeleteKeyword() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["keywords"] });
       toast.success("Keyword removida com sucesso!");
-    },
-    onError: (error) => {
-      toast.error(`Erro ao remover keyword: ${error.message}`);
     },
   });
 }
@@ -208,9 +199,6 @@ export function useCreateKeywordVariation() {
       });
       toast.success("Variação criada com sucesso!");
     },
-    onError: (error) => {
-      toast.error(`Erro ao criar variação: ${error.message}`);
-    },
   });
 }
 
@@ -230,9 +218,6 @@ export function useBulkCreateKeywords() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["keywords"] });
       toast.success(`${data.length} keywords criadas com sucesso!`);
-    },
-    onError: (error) => {
-      toast.error(`Erro ao criar keywords: ${error.message}`);
     },
   });
 }
@@ -265,14 +250,11 @@ export function useSemanticKeywordSearch() {
 
       if (error) throw error;
 
-      return data.map((item: any, index: number) => ({
+      return data.map((item: KeywordVariation, index: number) => ({
         item,
         similarity: item.similarity,
         rank: index + 1,
       }));
-    },
-    onError: (error) => {
-      toast.error(`Erro na busca semântica: ${error.message}`);
     },
   });
 }
@@ -344,9 +326,6 @@ export function useMarkKeywordAsUsed() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["keywords"] });
       toast.success("Keyword marcada como usada!");
-    },
-    onError: (error) => {
-      toast.error(`Erro ao marcar keyword: ${error.message}`);
     },
   });
 }

@@ -4,17 +4,17 @@ import { useNotifications } from '@/store/ui-store'
 interface BulkOperationParams {
   table: string
   operation: 'insert' | 'update' | 'delete' | 'upsert'
-  data: Record<string, any>[]
-  filters?: Record<string, any>
+  data: Record<string, unknown>[]
+  filters?: Record<string, unknown>
   returning?: string
 }
 
 interface AggregationParams {
   table: string
   columns: string[]
-  filters?: Record<string, any>
+  filters?: Record<string, unknown>
   groupBy?: string[]
-  having?: Record<string, any>
+  having?: Record<string, unknown>
   orderBy?: Array<{
     column: string
     ascending: boolean
@@ -24,7 +24,7 @@ interface AggregationParams {
 interface RelationshipQueryParams {
   table: string
   select: string
-  filters?: Record<string, any>
+  filters?: Record<string, unknown>
   limit?: number
   offset?: number
 }
@@ -42,7 +42,10 @@ export function useBulkOperation() {
         },
         body: JSON.stringify({
           operation: 'bulk_operation',
-          ...params,
+          table: params.table,
+          data: params.data,
+          filters: params.filters,
+          returning: params.returning,
         }),
       })
 
@@ -61,13 +64,6 @@ export function useBulkOperation() {
 
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: [variables.table] })
-    },
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        title: 'Bulk operation failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      })
     },
   })
 }
@@ -128,7 +124,7 @@ export function useCustomFunction() {
   const { addNotification } = useNotifications()
 
   return useMutation({
-    mutationFn: async (params: { function_name: string; parameters?: Record<string, any> }) => {
+    mutationFn: async (params: { function_name: string; parameters?: Record<string, unknown> }) => {
       const response = await fetch('/api/database/operations', {
         method: 'POST',
         headers: {
@@ -151,13 +147,6 @@ export function useCustomFunction() {
         type: 'success',
         title: 'Function executed',
         message: `Function ${variables.function_name} completed successfully`,
-      })
-    },
-    onError: (error, variables) => {
-      addNotification({
-        type: 'error',
-        title: 'Function execution failed',
-        message: `${variables.function_name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       })
     },
   })
@@ -220,7 +209,7 @@ export function useInsertMany(table: string) {
   const bulkOperation = useBulkOperation()
 
   return {
-    insertMany: (data: Record<string, any>[]) =>
+    insertMany: (data: Record<string, unknown>[]) =>
       bulkOperation.mutate({
         table,
         operation: 'insert',
@@ -235,7 +224,7 @@ export function useUpdateMany(table: string) {
   const bulkOperation = useBulkOperation()
 
   return {
-    updateMany: (data: Record<string, any>[], filters: Record<string, any>) =>
+    updateMany: (data: Record<string, unknown>[], filters: Record<string, unknown>) =>
       bulkOperation.mutate({
         table,
         operation: 'update',
@@ -251,7 +240,7 @@ export function useDeleteMany(table: string) {
   const bulkOperation = useBulkOperation()
 
   return {
-    deleteMany: (filters: Record<string, any>) =>
+    deleteMany: (filters: Record<string, unknown>) =>
       bulkOperation.mutate({
         table,
         operation: 'delete',
@@ -267,7 +256,7 @@ export function useUpsertMany(table: string) {
   const bulkOperation = useBulkOperation()
 
   return {
-    upsertMany: (data: Record<string, any>[]) =>
+    upsertMany: (data: Record<string, unknown>[]) =>
       bulkOperation.mutate({
         table,
         operation: 'upsert',

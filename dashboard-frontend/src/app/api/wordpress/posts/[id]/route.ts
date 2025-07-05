@@ -108,19 +108,21 @@ export async function PUT(
           categories: validatedData.categories,
           tags: validatedData.tags,
           featured_media: validatedData.featured_image_url,
-          yoast_head_title: validatedData.meta_title,
-          yoast_head_description: validatedData.meta_description,
-        })
+          meta: {
+            yoast_head_title: validatedData.meta_title,
+            yoast_head_description: validatedData.meta_description,
+          }
+        } as Record<string, unknown>)
       } catch (wpError) {
         return NextResponse.json(
-          { error: 'Failed to update WordPress post', details: wpError },
+          { error: 'Failed to update WordPress post', details: wpError as Error },
           { status: 500 }
         )
       }
     }
     
     // Update database
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       ...validatedData,
       updated_at: new Date().toISOString(),
     }

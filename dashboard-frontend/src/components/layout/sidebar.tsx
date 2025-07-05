@@ -23,8 +23,6 @@ import {
   Menu,
   X,
   Activity,
-  Users,
-  Zap,
   Database,
   Code2,
   Sparkles,
@@ -33,7 +31,8 @@ import {
   Bell,
   Sun,
   Moon,
-  LogOut
+  LogOut,
+  Zap
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -284,13 +283,16 @@ export function Sidebar() {
         initial={false}
         animate={{
           width: isCollapsed ? 70 : 260,
-          x: isMobileOpen ? 0 : -260
+          x: 0
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className={cn(
           'fixed left-0 top-0 z-40 h-full border-r bg-card/50 backdrop-blur-xl',
           'md:translate-x-0',
-          isMobileOpen && 'translate-x-0'
+          // Mobile: show/hide based on mobile menu state
+          'max-md:transition-transform max-md:duration-300',
+          !isMobileOpen && 'max-md:-translate-x-full',
+          isMobileOpen && 'max-md:translate-x-0'
         )}
       >
         <div className="flex h-full flex-col">

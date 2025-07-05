@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // Use standalone output only for production build to avoid path issues in dev
+  ...(process.env.NODE_ENV === 'production' ? { output: 'standalone' } : {}),
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js']
   },

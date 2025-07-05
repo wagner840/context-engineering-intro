@@ -19,23 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
 import {
   Save,
   Eye,
-  Upload,
-  Image as ImageIcon,
   Link,
   Bold,
   Italic,
   List,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Undo,
-  Redo,
-  Settings,
 } from "lucide-react";
 import { useNotifications } from "@/store/ui-store";
 import { useBlogStore } from "@/store/blog-store";
@@ -56,8 +46,8 @@ interface WordPressEditorProps {
     meta_description?: string;
     target_keywords?: string[];
   };
-  onSave?: (data: any) => void;
-  onPreview?: (data: any) => void;
+  onSave?: (data: Record<string, unknown>) => void;
+  onPreview?: (data: Record<string, unknown>) => void;
 }
 
 export function WordPressEditor({
@@ -67,7 +57,6 @@ export function WordPressEditor({
   onSave,
   onPreview,
 }: WordPressEditorProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -98,46 +87,47 @@ export function WordPressEditor({
     setReadingTime(Math.ceil(words / 200)); // Average reading speed
 
     // Calculate basic SEO score
+    const calculateSEOScore = () => {
+      let score = 0;
+  
+      // Title checks
+      if (formData.title.length >= 30 && formData.title.length <= 60) score += 20;
+  
+      // Meta description checks
+      if (
+        formData.meta_description.length >= 120 &&
+        formData.meta_description.length <= 160
+      )
+        score += 20;
+  
+      // Content length checks
+      if (wordCount >= 300) score += 20;
+  
+      // Target keywords usage
+      if (formData.target_keywords.length > 0) {
+        const keywordInTitle = formData.target_keywords.some((keyword) =>
+          formData.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+        if (keywordInTitle) score += 20;
+  
+        const keywordInContent = formData.target_keywords.some((keyword) =>
+          formData.content.toLowerCase().includes(keyword.toLowerCase())
+        );
+        if (keywordInContent) score += 20;
+      }
+  
+      setSeoScore(score);
+    };
+
     calculateSEOScore();
   }, [
     formData.content,
     formData.title,
     formData.meta_title,
     formData.meta_description,
+    formData.target_keywords,
+    wordCount,
   ]);
-
-  const calculateSEOScore = () => {
-    let score = 0;
-    const maxScore = 100;
-
-    // Title checks
-    if (formData.title.length >= 30 && formData.title.length <= 60) score += 20;
-
-    // Meta description checks
-    if (
-      formData.meta_description.length >= 120 &&
-      formData.meta_description.length <= 160
-    )
-      score += 20;
-
-    // Content length checks
-    if (wordCount >= 300) score += 20;
-
-    // Target keywords usage
-    if (formData.target_keywords.length > 0) {
-      const keywordInTitle = formData.target_keywords.some((keyword) =>
-        formData.title.toLowerCase().includes(keyword.toLowerCase())
-      );
-      if (keywordInTitle) score += 20;
-
-      const keywordInContent = formData.target_keywords.some((keyword) =>
-        formData.content.toLowerCase().includes(keyword.toLowerCase())
-      );
-      if (keywordInContent) score += 20;
-    }
-
-    setSeoScore(score);
-  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -261,7 +251,7 @@ export function WordPressEditor({
 
     for (const file of files) {
       try {
-        const result = (await uploadMedia.mutateAsync({ blogId, file })) as any;
+        const result = (await uploadMedia.mutateAsync({ blogId, file })) as { data: { url: string, source_url: string }, url: string };
         const url =
           result?.data?.url || result?.data?.source_url || result?.url;
         if (url) {

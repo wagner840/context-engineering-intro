@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       .select('*')
     
     if (active === 'true') {
-      query = query.eq('status', 'active')
+      query = query.eq('is_active', true)
     }
     
     const { data, error } = await query.order('created_at', { ascending: false })
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       .from('blogs')
       .insert({
         ...validatedData,
-        status: 'active',
+        is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })

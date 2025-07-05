@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Plus,
   Search,
-  Filter,
   TrendingUp,
   Target,
   BarChart3,
@@ -50,7 +49,7 @@ export default function BlogKeywordsPage({
 
   const keywords = keywordsData?.data || [];
 
-  const handleFilterChange = (key: keyof KeywordSearchFilters, value: any) => {
+  const handleFilterChange = (key: keyof KeywordSearchFilters, value: string | boolean) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 

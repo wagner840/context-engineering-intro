@@ -15,8 +15,8 @@ import { useBlogStore } from "@/store/blog-store";
 interface RealtimeEvent {
   table: string;
   eventType: "INSERT" | "UPDATE" | "DELETE";
-  old: Record<string, any> | null;
-  new: Record<string, any> | null;
+  old: Record<string, unknown> | null;
+  new: Record<string, unknown> | null;
   timestamp: string;
 }
 
@@ -44,7 +44,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<RealtimeEvent[]>([]);
   
   // Use refs to avoid re-creating functions and causing infinite loops
-  const subscriptionsRef = useRef<Map<string, any>>(new Map());
+  const subscriptionsRef = useRef<Map<string, ReturnType<typeof supabaseRef.current.channel>>>(new Map());
   const callbacksRef = useRef<Map<string, Set<(event: RealtimeEvent) => void>>>(new Map());
   const supabaseRef = useRef(createSupabaseClient());
   const notificationsRef = useRef(useNotifications());
@@ -207,11 +207,13 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
   // Cleanup on unmount
   useEffect(() => {
+    const subs = subscriptionsRef.current;
+    const supabase = supabaseRef.current;
     return () => {
-      subscriptionsRef.current.forEach((channel) => {
-        supabaseRef.current.removeChannel(channel);
+      subs.forEach((channel) => {
+        supabase.removeChannel(channel);
       });
-      subscriptionsRef.current.clear();
+      subs.clear();
       callbacksRef.current.clear();
     };
   }, []);

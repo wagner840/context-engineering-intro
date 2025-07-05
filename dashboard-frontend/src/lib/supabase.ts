@@ -86,15 +86,15 @@ export async function calculateKeywordOpportunityScore(
 
 export type RealtimeChannel = ReturnType<typeof supabase.channel>
 
-export function subscribeToTable<T = any>(
+export function subscribeToTable(
   tableName: string,
   filter?: string,
-  callback?: (payload: any) => void
+  callback: (payload: unknown) => void = () => {}
 ) {
   const channel = supabase
     .channel(`public:${tableName}`)
     .on(
-      'postgres_changes',
+      'postgres_changes' as 'postgres_changes',
       {
         event: '*',
         schema: 'public',

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceClient } from '@/lib/supabase'
 import { z } from 'zod'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 const bulkOperationSchema = z.object({
   table: z.string(),
@@ -67,10 +68,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleBulkOperation(supabase: any, body: any) {
+async function handleBulkOperation(supabase: SupabaseClient, body: unknown) {
   const validatedData = bulkOperationSchema.parse(body)
   
-  let query = supabase.from(validatedData.table)
+  const query = supabase.from(validatedData.table)
   
   switch (validatedData.operation) {
     case 'insert':
@@ -125,7 +126,7 @@ async function handleBulkOperation(supabase: any, body: any) {
   }
 }
 
-async function handleAggregation(supabase: any, body: any) {
+async function handleAggregation(supabase: SupabaseClient, body: unknown) {
   const validatedData = aggregationSchema.parse(body)
   
   // Build aggregation query
@@ -137,7 +138,7 @@ async function handleAggregation(supabase: any, body: any) {
   // Apply filters
   if (validatedData.filters) {
     Object.entries(validatedData.filters).forEach(([key, value]) => {
-      query = query.eq(key, value)
+      query = query.eq(key, value as string)
     })
   }
   
@@ -155,7 +156,7 @@ async function handleAggregation(supabase: any, body: any) {
   return NextResponse.json({ data, operation: 'aggregation' })
 }
 
-async function handleRelationshipQuery(supabase: any, body: any) {
+async function handleRelationshipQuery(supabase: SupabaseClient, body: unknown) {
   const validatedData = relationshipQuerySchema.parse(body)
   
   let query = supabase
@@ -168,7 +169,7 @@ async function handleRelationshipQuery(supabase: any, body: any) {
       if (Array.isArray(value)) {
         query = query.in(key, value)
       } else {
-        query = query.eq(key, value)
+        query = query.eq(key, value as string)
       }
     })
   }
@@ -186,7 +187,7 @@ async function handleRelationshipQuery(supabase: any, body: any) {
   return NextResponse.json({ data, operation: 'relationship_query' })
 }
 
-async function handleCustomFunction(supabase: any, body: any) {
+async function handleCustomFunction(supabase: SupabaseClient, body: { function_name: string; parameters: unknown }) {
   const { function_name, parameters } = body
   
   if (!function_name) {
@@ -228,7 +229,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function getTableInfo(supabase: any, searchParams: URLSearchParams) {
+async function getTableInfo(supabase: SupabaseClient, searchParams: URLSearchParams) {
   const tableName = searchParams.get('table')
   
   if (!tableName) {
@@ -261,7 +262,7 @@ async function getTableInfo(supabase: any, searchParams: URLSearchParams) {
   })
 }
 
-async function getSchemaInfo(supabase: any) {
+async function getSchemaInfo(supabase: SupabaseClient) {
   // Get all tables in public schema
   const { data: tables, error: tablesError } = await supabase
     .from('information_schema.tables')
@@ -279,13 +280,13 @@ async function getSchemaInfo(supabase: any) {
   if (viewsError) throw viewsError
   
   return NextResponse.json({
-    tables: tables?.map(t => t.table_name) || [],
-    views: views?.map(v => v.table_name) || [],
+    tables: tables?.map((t: { table_name: string }) => t.table_name) || [],
+    views: views?.map((v: { table_name: string }) => v.table_name) || [],
     operation: 'schema_info'
   })
 }
 
-async function getFunctionsList(supabase: any) {
+async function getFunctionsList(supabase: SupabaseClient) {
   // Get custom functions
   const { data: functions, error: functionsError } = await supabase
     .from('information_schema.routines')
@@ -296,7 +297,7 @@ async function getFunctionsList(supabase: any) {
   if (functionsError) throw functionsError
   
   return NextResponse.json({
-    functions: functions?.map(f => ({
+    functions: functions?.map((f: { routine_name: string, routine_type: string, data_type: string }) => ({
       name: f.routine_name,
       type: f.routine_type,
       return_type: f.data_type

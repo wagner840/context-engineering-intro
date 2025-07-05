@@ -1,11 +1,10 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { supabase, findSimilarKeywords, findSimilarPosts } from '@/lib/supabase'
-import { useNotifications } from '@/store/ui-store'
 import { useDebounce } from './use-debounce'
 import { Database } from '@/types/database'
 
-type SemanticCluster = Database['public']['Tables']['semantic_clusters']['Row']
+type SemanticCluster = Database['public']['Tables']['keyword_clusters']['Row']
 
 interface SimilarKeyword {
   id: string
@@ -41,7 +40,6 @@ export function useVectorSearch(blogId: string) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchType, setSearchType] = useState<'keywords' | 'posts'>('keywords')
   const [isSearching, setIsSearching] = useState(false)
-  const { addNotification } = useNotifications()
 
   const debouncedQuery = useDebounce(searchQuery, 500)
 
@@ -94,14 +92,6 @@ export function useVectorSearch(blogId: string) {
     },
     enabled: !!debouncedQuery.trim() && !!blogId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Search failed',
-        message: error.message,
-      })
-      setIsSearching(false)
-    },
   })
 
   const search = useCallback((query: string, type: 'keywords' | 'posts' = 'keywords') => {
@@ -127,8 +117,6 @@ export function useVectorSearch(blogId: string) {
 }
 
 export function useKeywordEmbeddings(blogId: string) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: ['keyword-embeddings', blogId],
     queryFn: async () => {
@@ -154,19 +142,10 @@ export function useKeywordEmbeddings(blogId: string) {
     },
     enabled: !!blogId,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch keyword embeddings',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function usePostEmbeddings(blogId: string) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: ['post-embeddings', blogId],
     queryFn: async () => {
@@ -185,18 +164,10 @@ export function usePostEmbeddings(blogId: string) {
     },
     enabled: !!blogId,
     staleTime: 10 * 60 * 1000,
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch post embeddings',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function useSemanticRecommendations(targetKeyword: string, blogId: string) {
-  const { addNotification } = useNotifications()
   const debouncedKeyword = useDebounce(targetKeyword, 1000)
 
   return useQuery({
@@ -229,13 +200,6 @@ export function useSemanticRecommendations(targetKeyword: string, blogId: string
     },
     enabled: !!debouncedKeyword.trim() && !!blogId,
     staleTime: 10 * 60 * 1000,
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to get recommendations',
-        message: error.message,
-      })
-    },
   })
 }
 
@@ -262,7 +226,7 @@ export function useEmbeddingStats(blogId: string) {
 export function useAdvancedVectorSearch() {
   return useMutation({
     mutationFn: async (params: VectorSearchParams): Promise<VectorSearchResult[]> => {
-      const { query, blogId, similarityThreshold, maxResults, searchType } = params
+      const { query, blogId, similarityThreshold, maxResults } = params
       
       // First, get the embedding for the search query
       const { data: embedding, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -291,10 +255,10 @@ export function useSemanticClusters(blogId: string) {
     queryKey: ['semantic-clusters', blogId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('semantic_clusters')
+        .from('keyword_clusters')
         .select('*')
         .eq('blog_id', blogId)
-        .order('keyword_count', { ascending: false })
+        .order('cluster_name', { ascending: true })
 
       if (error) throw error
       return data as SemanticCluster[]
@@ -318,7 +282,7 @@ export function useClusterKeywords(clusterId: string) {
           )
         `)
         .eq('semantic_cluster_id', clusterId)
-        .order('msv', { ascending: false, nullsLast: true })
+        .order('msv', { ascending: false })
 
       if (error) throw error
       return data
@@ -388,9 +352,9 @@ export function useClusterAnalysis(blogId: string) {
   }
 
   const totalClusters = clusters.length
-  const totalKeywords = clusters.reduce((sum, c) => sum + c.keyword_count, 0)
+  const totalKeywords = clusters.reduce((sum, c) => sum + (c.main_keyword_id ? 1 : 0), 0)
   const avgClusterSize = Math.round(totalKeywords / totalClusters)
-  const largestCluster = clusters.sort((a, b) => b.keyword_count - a.keyword_count)[0]
+  const largestCluster = clusters.sort((a, b) => (b.main_keyword_id ? 1 : 0) - (a.main_keyword_id ? 1 : 0))[0]
   
   // Distribution by cluster size
   const sizeRanges = [
@@ -402,7 +366,7 @@ export function useClusterAnalysis(blogId: string) {
   
   const clusterDistribution = sizeRanges.map(range => ({
     range: range.range,
-    count: clusters.filter(c => c.keyword_count >= range.min && c.keyword_count <= range.max).length
+    count: clusters.filter(c => (c.main_keyword_id ? 1 : 0) >= range.min && (c.main_keyword_id ? 1 : 0) <= range.max).length
   }))
 
   return {

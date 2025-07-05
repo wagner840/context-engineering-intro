@@ -5,8 +5,8 @@ export {
   useCreateBlog,
   useUpdateBlog,
   useDeleteBlog,
-  useBlogRealtime,
-  BLOG_QUERY_KEYS,
+  // useBlogRealtime, // Temporariamente desabilitado
+  // BLOG_QUERY_KEYS, // Temporariamente desabilitado
 } from './use-blogs'
 
 // Keyword hooks
@@ -14,69 +14,45 @@ export {
   useMainKeywords,
   useKeywordVariations,
   useKeywordOpportunities,
-  useCreateMainKeyword,
+  useCreateKeyword,
   useCreateKeywordVariation,
-  useUpdateMainKeyword,
-  useDeleteMainKeyword,
+  useUpdateKeyword,
+  useDeleteKeyword,
   useMarkKeywordAsUsed,
-  useKeywordOpportunityScore,
-  useKeywordRealtime,
-  KEYWORD_QUERY_KEYS,
+  // useKeywordOpportunityScore, // Temporarily disabled
+  // useKeywordRealtime, // Temporarily disabled
+  // KEYWORD_QUERY_KEYS, // Temporarily disabled
 } from './use-keywords'
-
-// Content hooks
-export {
-  useContentPosts,
-  useContentPost,
-  useProductionPipeline,
-  useContentPostsByStatus,
-  useCreateContentPost,
-  useUpdateContentPost,
-  useDeleteContentPost,
-  useUpdatePostStatus,
-  useSchedulePost,
-  usePublishPost,
-  useContentStats,
-  useContentRealtime,
-  CONTENT_QUERY_KEYS,
-} from './use-content'
 
 // Dashboard hooks
 export {
-  useExecutiveDashboard,
-  useExecutiveDashboardSingle,
-  useAnalyticsMetrics,
-  useSerpResults,
   useDashboardStats,
-  useBlogNiches,
-  useDashboardRealtime,
-  DASHBOARD_QUERY_KEYS,
-} from './use-dashboard'
+} from './use-dashboard-stats'
 
-// Vector search hooks
+// Posts hooks
 export {
-  useVectorSearch,
-  useKeywordEmbeddings,
-  usePostEmbeddings,
-  useSemanticRecommendations,
-  useEmbeddingStats,
-} from './use-vector-search'
+  useBlogPosts,
+  usePost,
+  useCreatePost,
+  useUpdatePost,
+  useDeletePost,
+  useSearchPosts,
+  useBulkUpdatePosts,
+  usePostStats,
+  POSTS_QUERY_KEYS,
+} from './use-posts'
 
-// Automation hooks
+// WordPress sync hooks
 export {
-  useWorkflows,
-  useWorkflow,
-  useExecutions,
-  useExecution,
-  useN8nHealth,
-  useActivateWorkflow,
-  useDeactivateWorkflow,
-  useExecuteWorkflow,
-  useWorkflowStats,
-  useWorkflowPerformance,
-  useAutomationOverview,
-  AUTOMATION_QUERY_KEYS,
-} from './use-automation'
+  useWordPressSync,
+  useWordPressConnection,
+} from './use-wordpress-sync'
+
+// Other hooks temporarily disabled for build
+// export {
+//   useContentPosts,
+//   ...
+// } from './use-content'
 
 // Utility hooks
 export { useDebounce } from './use-debounce'

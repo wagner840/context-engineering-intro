@@ -3,9 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type {
   ContentPost,
   PostWithMeta,
-  PaginatedResponse,
   DatabaseInsert,
-  DatabaseUpdate,
 } from "@/types/database";
 import { toast } from "sonner";
 
@@ -117,49 +115,6 @@ export function useCreateContentPost() {
       invalidate();
       toast.success("Post criado com sucesso!");
     },
-    onError: (e: Error) => toast.error(`Erro ao criar post: ${e.message}`),
-  });
-}
-
-export function useUpdateContentPost() {
-  const invalidate = useInvalidateContent();
-  return useMutation({
-    mutationFn: async ({
-      id,
-      ...updates
-    }: DatabaseUpdate<ContentPost> & { id: string }) => {
-      const { data, error } = await supabase
-        .from("content_posts")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      invalidate();
-      toast.success("Post atualizado!");
-    },
-    onError: (e: Error) => toast.error(`Erro ao atualizar post: ${e.message}`),
-  });
-}
-
-export function useDeleteContentPost() {
-  const invalidate = useInvalidateContent();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("content_posts")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      invalidate();
-      toast.success("Post excluído!");
-    },
-    onError: (e: Error) => toast.error(`Erro ao excluir post: ${e.message}`),
   });
 }
 
@@ -176,7 +131,10 @@ export function useUpdatePostStatus() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => invalidate(),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Status do post atualizado!");
+    },
   });
 }
 
@@ -217,7 +175,7 @@ export function usePublishPost() {
 /* ---------------------------------------------------------------------------
  * REATIME SUBSCRIPTION (opcional)
  * ------------------------------------------------------------------------ */
-export function useContentRealtime(enabled: boolean = false) {
+export function useContentRealtime() {
   // For simplicity, not implementing realtime here. Could reuse useRealtime pattern.
   return { isSubscribed: false };
 }

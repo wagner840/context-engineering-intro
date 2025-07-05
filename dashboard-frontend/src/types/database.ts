@@ -772,6 +772,8 @@ export interface MainKeyword {
   location?: string;
   language?: string;
   search_limit?: number;
+  seo_score?: number;
+  last_updated?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -798,6 +800,7 @@ export interface KeywordVariation {
     | "transactional";
   embedding?: number[];
   answer?: string;
+  similarity?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -829,38 +832,38 @@ export interface ContentPost {
   blog_id: string;
   author_id: string;
   title: string;
-  slug?: string;
-  excerpt?: string;
-  content?: string;
-  status?: "draft" | "review" | "scheduled" | "published" | "archived";
-  featured_image_url?: string;
-  seo_title?: string;
-  seo_description?: string;
-  focus_keyword?: string;
-  readability_score?: number;
-  seo_score?: number;
-  word_count?: number;
-  reading_time?: number;
-  scheduled_at?: string;
-  published_at?: string;
-  wordpress_post_id?: number;
-  embedding?: number[];
-  created_at?: string;
-  updated_at?: string;
+  slug: string | null;
+  excerpt: string | null;
+  content: string | null;
+  status: string;
+  featured_image_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  focus_keyword: string | null;
+  readability_score: number | null;
+  seo_score: number | null;
+  word_count: number;
+  reading_time: number;
+  scheduled_at: string | null;
+  published_at: string | null;
+  embedding: number[] | null;
+  created_at: string;
+  updated_at: string;
+  wordpress_post_id: number | null;
 }
 
 export interface SerpResult {
   id: string;
   main_keyword_id: string;
   position: number;
-  title?: string;
-  url?: string;
-  description?: string;
-  domain?: string;
-  type?: string;
-  features?: Record<string, any>;
-  created_at?: string;
-  updated_at?: string;
+  title: string | null;
+  url: string | null;
+  description: string | null;
+  domain: string | null;
+  type: string;
+  features: Json;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ContentOpportunityCluster {
@@ -1004,6 +1007,7 @@ export interface DocumentRow {
 
 // Types para relacionamentos
 export interface BlogWithKeywords extends Blog {
+  wordpress_config?: any;
   keywords?: MainKeyword[];
   posts?: ContentPost[];
   authors?: Author[];
@@ -1195,3 +1199,23 @@ export interface ImportRequest {
 // Utility types for database operations
 export type DatabaseInsert<T> = Omit<T, "id" | "created_at" | "updated_at">;
 export type DatabaseUpdate<T> = Partial<DatabaseInsert<T>>;
+
+export interface Post {
+  id: string
+  title: string
+  content: string
+  excerpt?: string
+  status: 'draft' | 'published' | 'scheduled'
+  featured_image?: string
+  categories?: string[]
+  tags?: string[]
+  author_id: string
+  blog_id: string
+  blog_name?: string
+  created_at: string
+  updated_at: string
+  published_at?: string
+  seo_title?: string
+  seo_description?: string
+  seo_keywords?: string[]
+}

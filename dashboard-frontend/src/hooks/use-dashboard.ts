@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useNotifications } from '@/store/ui-store'
 import type { Database } from '@/types/database'
 
 type ExecutiveDashboard = Database['public']['Views']['executive_dashboard']['Row']
@@ -12,8 +11,6 @@ export const DASHBOARD_QUERY_KEYS = {
 } as const
 
 export function useExecutiveDashboard(blogName?: string) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: blogName 
       ? DASHBOARD_QUERY_KEYS.executiveBlog(blogName)
@@ -36,13 +33,6 @@ export function useExecutiveDashboard(blogName?: string) {
       return data
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch dashboard data',
-        message: error.message,
-      })
-    },
   })
 }
 
@@ -56,8 +46,6 @@ export function useExecutiveDashboardSingle(blogName: string) {
 }
 
 export function useAnalyticsMetrics(blogId: string, dateRange?: { start: string; end: string }) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: ['analytics-metrics', blogId, dateRange],
     queryFn: async () => {
@@ -84,19 +72,10 @@ export function useAnalyticsMetrics(blogId: string, dateRange?: { start: string;
     },
     enabled: !!blogId,
     staleTime: 5 * 60 * 1000,
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch analytics metrics',
-        message: error.message,
-      })
-    },
   })
 }
 
 export function useSerpResults(blogId: string) {
-  const { addNotification } = useNotifications()
-
   return useQuery({
     queryKey: ['serp-results', blogId],
     queryFn: async () => {
@@ -123,13 +102,6 @@ export function useSerpResults(blogId: string) {
     },
     enabled: !!blogId,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    onError: (error: Error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to fetch SERP results',
-        message: error.message,
-      })
-    },
   })
 }
 
@@ -142,13 +114,13 @@ export function useDashboardStats(blogId?: string) {
 
   const stats = {
     totalBlogs: executiveDashboard?.length || 0,
-    totalKeywords: executiveDashboard?.reduce((sum, blog) => sum + blog.total_keywords, 0) || 0,
-    totalPosts: executiveDashboard?.reduce((sum, blog) => sum + blog.total_posts, 0) || 0,
-    publishedPosts: executiveDashboard?.reduce((sum, blog) => sum + blog.published_posts, 0) || 0,
-    totalOpportunities: executiveDashboard?.reduce((sum, blog) => sum + blog.total_opportunities, 0) || 0,
-    avgMsv: executiveDashboard?.reduce((sum, blog) => sum + blog.avg_msv, 0) / (executiveDashboard?.length || 1) || 0,
-    avgDifficulty: executiveDashboard?.reduce((sum, blog) => sum + blog.avg_difficulty, 0) / (executiveDashboard?.length || 1) || 0,
-    avgCpc: executiveDashboard?.reduce((sum, blog) => sum + blog.avg_cpc, 0) / (executiveDashboard?.length || 1) || 0,
+    totalKeywords: executiveDashboard?.reduce((sum, blog) => sum + (blog.total_keywords || 0), 0) || 0,
+    totalPosts: executiveDashboard?.reduce((sum, blog) => sum + (blog.total_posts || 0), 0) || 0,
+    publishedPosts: executiveDashboard?.reduce((sum, blog) => sum + (blog.published_posts || 0), 0) || 0,
+    totalOpportunities: executiveDashboard?.reduce((sum, blog) => sum + (blog.total_opportunities || 0), 0) || 0,
+    avgMsv: (executiveDashboard?.reduce((sum, blog) => sum + (blog.avg_msv || 0), 0) || 0) / (executiveDashboard?.length || 1),
+    avgDifficulty: (executiveDashboard?.reduce((sum, blog) => sum + (blog.avg_difficulty || 0), 0) || 0) / (executiveDashboard?.length || 1),
+    avgCpc: (executiveDashboard?.reduce((sum, blog) => sum + (blog.avg_cpc || 0), 0) || 0) / (executiveDashboard?.length || 1),
     recentMetrics: analytics?.slice(0, 7) || [], // Last 7 metrics
   }
 

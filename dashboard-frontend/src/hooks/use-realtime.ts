@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useNotifications } from '@/store/ui-store'
-import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface UseRealtimeOptions {
   table: string
@@ -21,28 +21,19 @@ export function useRealtime({ table, filter, event = '*', enabled = true }: UseR
 
     const channel = supabase
       .channel(`realtime-${table}`)
-      .on(
-        'postgres_changes',
-        {
-          event,
-          schema: 'public',
-          table,
-          filter,
-        },
-        (payload: RealtimePostgresChangesPayload<any>) => {
-          // Invalidate relevant queries
-          queryClient.invalidateQueries([table])
-          
-          // Show notification for important changes
-          if (payload.eventType === 'INSERT') {
-            addNotification({
-              type: 'info',
-              title: 'New Record',
-              message: `New ${table.slice(0, -1)} created`,
-            })
-          }
+      .on('postgres_changes' as any, { event, schema: 'public', table, filter }, (payload: any) => {
+        // Invalidate relevant queries
+        queryClient.invalidateQueries({ queryKey: [table] })
+        
+        // Show notification for important changes
+        if (payload.eventType === 'INSERT') {
+          addNotification({
+            type: 'info',
+            title: 'New Record',
+            message: `New ${table.slice(0, -1)} created`,
+          })
         }
-      )
+      })
       .subscribe()
 
     channelRef.current = channel
@@ -84,8 +75,8 @@ export function useBlogRealtime(blogId: string) {
           filter: `blog_id=eq.${blogId}`,
         },
         () => {
-          queryClient.invalidateQueries(['main-keywords', blogId])
-          queryClient.invalidateQueries(['keyword-opportunities', blogId])
+          queryClient.invalidateQueries({ queryKey: ['main-keywords', blogId] })
+          queryClient.invalidateQueries({ queryKey: ['keyword-opportunities', blogId] })
         }
       )
       .subscribe()
@@ -102,8 +93,8 @@ export function useBlogRealtime(blogId: string) {
           filter: `blog_id=eq.${blogId}`,
         },
         (payload) => {
-          queryClient.invalidateQueries(['content-posts', blogId])
-          queryClient.invalidateQueries(['content-stats', blogId])
+          queryClient.invalidateQueries({ queryKey: ['content-posts', blogId] })
+          queryClient.invalidateQueries({ queryKey: ['content-stats', blogId] })
           
           if (payload.eventType === 'UPDATE') {
             const oldStatus = payload.old?.status
@@ -133,7 +124,7 @@ export function useBlogRealtime(blogId: string) {
           filter: `blog_id=eq.${blogId}`,
         },
         () => {
-          queryClient.invalidateQueries(['serp-results', blogId])
+          queryClient.invalidateQueries({ queryKey: ['serp-results', blogId] })
         }
       )
       .subscribe()
@@ -150,8 +141,8 @@ export function useBlogRealtime(blogId: string) {
           filter: `blog_id=eq.${blogId}`,
         },
         (payload) => {
-          queryClient.invalidateQueries(['executions'])
-          queryClient.invalidateQueries(['automation-overview'])
+          queryClient.invalidateQueries({ queryKey: ['executions'] })
+          queryClient.invalidateQueries({ queryKey: ['automation-overview'] })
           
           if (payload.eventType === 'INSERT') {
             const status = payload.new?.status
@@ -189,8 +180,8 @@ export function useExecutiveDashboardRealtime() {
           table: 'blogs',
         },
         () => {
-          queryClient.invalidateQueries(['executive-dashboard'])
-          queryClient.invalidateQueries(['blogs'])
+          queryClient.invalidateQueries({ queryKey: ['executive-dashboard'] })
+          queryClient.invalidateQueries({ queryKey: ['blogs'] })
         }
       )
       .on(
@@ -201,7 +192,7 @@ export function useExecutiveDashboardRealtime() {
           table: 'main_keywords',
         },
         () => {
-          queryClient.invalidateQueries(['executive-dashboard'])
+          queryClient.invalidateQueries({ queryKey: ['executive-dashboard'] })
         }
       )
       .on(
@@ -212,7 +203,7 @@ export function useExecutiveDashboardRealtime() {
           table: 'content_posts',
         },
         () => {
-          queryClient.invalidateQueries(['executive-dashboard'])
+          queryClient.invalidateQueries({ queryKey: ['executive-dashboard'] })
         }
       )
       .subscribe()
@@ -225,16 +216,16 @@ export function useExecutiveDashboardRealtime() {
 
 export function useOptimisticUpdate<T>(
   queryKey: (string | number)[],
-  updateFn: (oldData: T | undefined, variables: any) => T | undefined
+  updateFn: (oldData: T | undefined, variables: Record<string, unknown>) => T | undefined
 ) {
   const queryClient = useQueryClient()
 
-  const optimisticUpdate = (variables: any) => {
+  const optimisticUpdate = (variables: Record<string, unknown>) => {
     queryClient.setQueryData<T>(queryKey, (oldData) => updateFn(oldData, variables))
   }
 
   const revert = () => {
-    queryClient.invalidateQueries(queryKey)
+    queryClient.invalidateQueries({ queryKey })
   }
 
   return { optimisticUpdate, revert }
@@ -244,27 +235,27 @@ export function useOptimisticUpdate<T>(
 export function useOptimisticKeywords(blogId: string) {
   const queryClient = useQueryClient()
 
-  const addKeyword = (keyword: any) => {
-    queryClient.setQueryData(['main-keywords', blogId], (old: any[] = []) => [
+  const addKeyword = (keyword: Record<string, unknown>) => {
+    queryClient.setQueryData(['main-keywords', blogId], (old: Record<string, unknown>[] = []) => [
       keyword,
       ...old
     ])
   }
 
-  const updateKeyword = (keywordId: string, updates: any) => {
-    queryClient.setQueryData(['main-keywords', blogId], (old: any[] = []) =>
+  const updateKeyword = (keywordId: string, updates: Record<string, unknown>) => {
+    queryClient.setQueryData(['main-keywords', blogId], (old: Record<string, unknown>[] = []) =>
       old.map(k => k.id === keywordId ? { ...k, ...updates } : k)
     )
   }
 
   const removeKeyword = (keywordId: string) => {
-    queryClient.setQueryData(['main-keywords', blogId], (old: any[] = []) =>
+    queryClient.setQueryData(['main-keywords', blogId], (old: Record<string, unknown>[] = []) =>
       old.filter(k => k.id !== keywordId)
     )
   }
 
   const revertKeywords = () => {
-    queryClient.invalidateQueries(['main-keywords', blogId])
+    queryClient.invalidateQueries({ queryKey: ['main-keywords', blogId] })
   }
 
   return { addKeyword, updateKeyword, removeKeyword, revertKeywords }
@@ -274,26 +265,26 @@ export function useOptimisticKeywords(blogId: string) {
 export function useOptimisticContent(blogId: string) {
   const queryClient = useQueryClient()
 
-  const addPost = (post: any) => {
-    queryClient.setQueryData(['content-posts', blogId], (old: any[] = []) => [
+  const addPost = (post: Record<string, unknown>) => {
+    queryClient.setQueryData(['content-posts', blogId], (old: Record<string, unknown>[] = []) => [
       post,
       ...old
     ])
   }
 
-  const updatePost = (postId: string, updates: any) => {
-    queryClient.setQueryData(['content-posts', blogId], (old: any[] = []) =>
-      old.map(p => p.id === postId ? { ...p, ...updates } : p)
+  const updatePost = (postId: string, updates: Record<string, unknown>) => {
+    queryClient.setQueryData(['content-posts', blogId], (old: Record<string, unknown>[] = []) =>
+      old.map(p => (p.id as string) === postId ? { ...p, ...updates } : p)
     )
   }
 
   const updatePostStatus = (postId: string, newStatus: string) => {
-    queryClient.setQueryData(['content-posts', blogId], (old: any[] = []) =>
-      old.map(p => p.id === postId ? { ...p, status: newStatus } : p)
+    queryClient.setQueryData(['content-posts', blogId], (old: Record<string, unknown>[] = []) =>
+      old.map(p => (p.id as string) === postId ? { ...p, status: newStatus } : p)
     )
     
     // Update stats optimistically
-    queryClient.setQueryData(['content-stats', blogId], (oldStats: any) => {
+    queryClient.setQueryData(['content-stats', blogId], (oldStats: Record<string, number>) => {
       if (!oldStats) return oldStats
       
       const updatedStats = { ...oldStats }
@@ -304,14 +295,14 @@ export function useOptimisticContent(blogId: string) {
   }
 
   const removePost = (postId: string) => {
-    queryClient.setQueryData(['content-posts', blogId], (old: any[] = []) =>
+    queryClient.setQueryData(['content-posts', blogId], (old: Record<string, unknown>[] = []) =>
       old.filter(p => p.id !== postId)
     )
   }
 
   const revertContent = () => {
-    queryClient.invalidateQueries(['content-posts', blogId])
-    queryClient.invalidateQueries(['content-stats', blogId])
+    queryClient.invalidateQueries({ queryKey: ['content-posts', blogId] })
+    queryClient.invalidateQueries({ queryKey: ['content-stats', blogId] })
   }
 
   return { addPost, updatePost, updatePostStatus, removePost, revertContent }
@@ -321,24 +312,24 @@ export function useOptimisticContent(blogId: string) {
 export function useOptimisticBlogs() {
   const queryClient = useQueryClient()
 
-  const updateBlog = (blogId: string, updates: any) => {
-    queryClient.setQueryData(['blogs'], (old: any[] = []) =>
+  const updateBlog = (blogId: string, updates: Record<string, unknown>) => {
+    queryClient.setQueryData(['blogs'], (old: Record<string, unknown>[] = []) =>
       old.map(b => b.id === blogId ? { ...b, ...updates } : b)
     )
     
-    queryClient.setQueryData(['blog', blogId], (old: any) => 
+    queryClient.setQueryData(['blog', blogId], (old: Record<string, unknown>) => 
       old ? { ...old, ...updates } : old
     )
   }
 
   const toggleBlogStatus = (blogId: string) => {
-    queryClient.setQueryData(['blogs'], (old: any[] = []) =>
+    queryClient.setQueryData(['blogs'], (old: { id: string, is_active: boolean }[] = []) =>
       old.map(b => b.id === blogId ? { ...b, is_active: !b.is_active } : b)
     )
   }
 
   const revertBlogs = () => {
-    queryClient.invalidateQueries(['blogs'])
+    queryClient.invalidateQueries({ queryKey: ['blogs'] })
   }
 
   return { updateBlog, toggleBlogStatus, revertBlogs }

@@ -4,7 +4,7 @@ import { useNotifications } from '@/store/ui-store'
 interface ExecuteWorkflowParams {
   workflow_id: string
   blog_id?: string
-  input_data?: Record<string, any>
+  input_data?: Record<string, unknown>
   wait_for_completion?: boolean
 }
 
@@ -83,13 +83,6 @@ export function useExecuteN8nWorkflow() {
       queryClient.invalidateQueries({ queryKey: ['n8n-executions'] })
       queryClient.invalidateQueries({ queryKey: ['n8n-workflow-status', variables.workflow_id] })
     },
-    onError: (error, variables) => {
-      addNotification({
-        type: 'error',
-        title: 'Workflow execution failed',
-        message: `Failed to execute ${variables.workflow_id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      })
-    },
   })
 }
 
@@ -106,9 +99,9 @@ export function useN8nExecution(executionId: string) {
       return response.json()
     },
     enabled: !!executionId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Auto-refresh if execution is still running
-      if (data?.data?.status === 'running') {
+      if (query.state.data?.data?.status === 'running') {
         return 2000 // 2 seconds
       }
       return false
@@ -164,13 +157,6 @@ export function useStopN8nExecution() {
       queryClient.invalidateQueries({ queryKey: ['n8n-execution', executionId] })
       queryClient.invalidateQueries({ queryKey: ['n8n-executions'] })
     },
-    onError: (error, executionId) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to stop execution',
-        message: `Could not stop execution ${executionId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      })
-    },
   })
 }
 
@@ -200,13 +186,6 @@ export function useRetryN8nExecution() {
 
       // Invalidate execution queries
       queryClient.invalidateQueries({ queryKey: ['n8n-executions'] })
-    },
-    onError: (error, executionId) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to retry execution',
-        message: `Could not retry execution ${executionId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      })
     },
   })
 }
@@ -277,14 +256,6 @@ export function useActivateN8nWorkflow() {
       queryClient.invalidateQueries({ queryKey: ['n8n-workflows'] })
       queryClient.invalidateQueries({ queryKey: ['n8n-workflow-status', variables.workflowId] })
     },
-    onError: (error, variables) => {
-      const action = variables.activate ? 'activate' : 'deactivate'
-      addNotification({
-        type: 'error',
-        title: `Failed to ${action} workflow`,
-        message: error instanceof Error ? error.message : 'Unknown error',
-      })
-    },
   })
 }
 
@@ -297,7 +268,7 @@ export function useTestN8nWorkflow() {
       testData 
     }: { 
       workflowId: string
-      testData?: Record<string, any> 
+      testData?: Record<string, unknown> 
     }) => {
       const response = await fetch(`/api/n8n/workflows/${workflowId}/test`, {
         method: 'POST',
@@ -321,13 +292,6 @@ export function useTestN8nWorkflow() {
         message: `Test for workflow ${variables.workflowId} completed successfully`,
       })
     },
-    onError: (error, variables) => {
-      addNotification({
-        type: 'error',
-        title: 'Workflow test failed',
-        message: `Test for workflow ${variables.workflowId} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      })
-    },
   })
 }
 
@@ -339,7 +303,7 @@ export function useWorkflowAutomation(blogId: string) {
   const testWorkflow = useTestN8nWorkflow()
 
   const triggerContentGeneration = (keywords: string[]) => {
-    const contentWorkflow = workflows?.data?.find((w: any) => w.name.includes('content-generation'))
+    const contentWorkflow = workflows?.data?.find((w: { name: string; }) => w.name.includes('content-generation'))
     
     if (contentWorkflow) {
       executeWorkflow.mutate({
@@ -351,7 +315,7 @@ export function useWorkflowAutomation(blogId: string) {
   }
 
   const triggerSEOAnalysis = (postId: string) => {
-    const seoWorkflow = workflows?.data?.find((w: any) => w.name.includes('seo-analysis'))
+    const seoWorkflow = workflows?.data?.find((w: { name: string; }) => w.name.includes('seo-analysis'))
     
     if (seoWorkflow) {
       executeWorkflow.mutate({
@@ -363,7 +327,7 @@ export function useWorkflowAutomation(blogId: string) {
   }
 
   const triggerSerpMonitoring = (keywords: string[]) => {
-    const serpWorkflow = workflows?.data?.find((w: any) => w.name.includes('serp-monitoring'))
+    const serpWorkflow = workflows?.data?.find((w: { name: string; }) => w.name.includes('serp-monitoring'))
     
     if (serpWorkflow) {
       executeWorkflow.mutate({

@@ -96,13 +96,6 @@ export function useCreateWordPressPost() {
       queryClient.invalidateQueries({ queryKey: ['wordpress-posts', variables.blog_id] })
       queryClient.invalidateQueries({ queryKey: ['content-posts', variables.blog_id] })
     },
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to create post',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      })
-    },
   })
 }
 
@@ -139,13 +132,6 @@ export function useUpdateWordPressPost() {
       queryClient.invalidateQueries({ queryKey: ['wordpress-posts'] })
       queryClient.invalidateQueries({ queryKey: ['content-posts'] })
     },
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to update post',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      })
-    },
   })
 }
 
@@ -176,13 +162,6 @@ export function useDeleteWordPressPost() {
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['wordpress-posts'] })
       queryClient.invalidateQueries({ queryKey: ['content-posts'] })
-    },
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        title: 'Failed to delete post',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      })
     },
   })
 }
@@ -231,13 +210,6 @@ export function useWordPressSync() {
       queryClient.invalidateQueries({ queryKey: ['content-posts', variables.blogId] })
       queryClient.invalidateQueries({ queryKey: ['wordpress-post', variables.postId] })
     },
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        title: 'Sync failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      })
-    },
   })
 
   const bulkSync = useMutation({
@@ -248,7 +220,7 @@ export function useWordPressSync() {
     }: { 
       blogId: string
       syncDirection?: 'to_wordpress' | 'from_wordpress'
-      filters?: Record<string, any>
+      filters?: Record<string, unknown>
     }) => {
       const response = await fetch(`/api/wordpress/bulk-sync`, {
         method: 'POST',
@@ -278,13 +250,6 @@ export function useWordPressSync() {
 
       queryClient.invalidateQueries({ queryKey: ['wordpress-posts', variables.blogId] })
       queryClient.invalidateQueries({ queryKey: ['content-posts', variables.blogId] })
-    },
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        title: 'Bulk sync failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      })
     },
   })
 
@@ -391,18 +356,11 @@ export function useUploadWordPressMedia() {
 
       queryClient.invalidateQueries({ queryKey: ['wordpress-media', variables.blogId] })
     },
-    onError: (error, variables) => {
-      addNotification({
-        type: 'error',
-        title: 'Upload failed',
-        message: `Failed to upload ${variables.file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      })
-    },
   })
 }
 
 // Utility hook for WordPress editor state
-export function useWordPressEditor(postId?: string, blogId?: string) {
+export function useWordPressEditor(postId?: string) {
   const { data: post, isLoading: isLoadingPost } = useWordPressPost(postId || '')
   const createPost = useCreateWordPressPost()
   const updatePost = useUpdateWordPressPost()

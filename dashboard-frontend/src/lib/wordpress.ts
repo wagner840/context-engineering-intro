@@ -191,7 +191,7 @@ export class WordPressApiClient {
       title: localPost.title,
       content: localPost.content,
       excerpt: localPost.excerpt || '',
-      status: localPost.status,
+      status: localPost.status as 'draft' | 'pending' | 'publish' | 'future' | 'private',
       categories: localPost.categories || [],
       tags: localPost.tags || [],
       featured_media: localPost.featured_media || 0,
@@ -199,9 +199,9 @@ export class WordPressApiClient {
     }
 
     if (wordpressPostId) {
-      return this.updatePost(wordpressPostId, wpPost)
+      return this.updatePost(wordpressPostId, wpPost as any)
     } else {
-      return this.createPost(wpPost)
+      return this.createPost(wpPost as any)
     }
   }
 
@@ -292,15 +292,67 @@ export class WordPressAPI {
   }
 
   // Delegate all methods to the client
-  getPosts = this.client.getPosts.bind(this.client)
-  getPost = this.client.getPost.bind(this.client)
-  createPost = this.client.createPost.bind(this.client)
-  updatePost = this.client.updatePost.bind(this.client)
-  deletePost = this.client.deletePost.bind(this.client)
-  getCategories = this.client.getCategories.bind(this.client)
-  createCategory = this.client.createCategory.bind(this.client)
-  getTags = this.client.getTags.bind(this.client)
-  createTag = this.client.createTag.bind(this.client)
-  getMedia = this.client.getMedia.bind(this.client)
-  uploadMedia = this.client.uploadMedia.bind(this.client)
+  getPosts(options?: any) {
+    return this.client.getPosts(options)
+  }
+  
+  getPost(id: number) {
+    return this.client.getPost(id)
+  }
+  
+  createPost(post: any) {
+    return this.client.createPost(post)
+  }
+  
+  updatePost(id: number, post: any) {
+    return this.client.updatePost(id, post)
+  }
+  
+  deletePost(id: number) {
+    return this.client.deletePost(id)
+  }
+  
+  getCategories() {
+    return this.client.getCategories()
+  }
+  
+  createCategory(category: any) {
+    return this.client.createCategory(category)
+  }
+  
+  getTags() {
+    return this.client.getTags()
+  }
+  
+  createTag(tag: any) {
+    return this.client.createTag(tag)
+  }
+  
+  getMedia() {
+    return this.client.getMedia()
+  }
+  
+  uploadMedia(file: any) {
+    return this.client.uploadMedia(file)
+  }
+}
+
+export const getWordPressClient = async (blogId: string): Promise<WordPressApiClient> => {
+  // Carrega dados do blog via Supabase público
+  try {
+    const { createSupabaseClient } = await import('@/lib/supabase') as any
+    const supa = createSupabaseClient()
+    const { data: blog, error } = await supa
+      .from('blogs')
+      .select('domain, settings')
+      .eq('id', blogId)
+      .single()
+    if (error || !blog) {
+      throw new Error('Blog não encontrado')
+    }
+    return getWordPressClientForBlog(blog as any)
+  } catch (err) {
+    // Fallback: tenta usar domínio diretamente
+    return getWordPressClientByDomain(blogId)
+  }
 }

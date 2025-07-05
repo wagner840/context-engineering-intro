@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cva } from 'class-variance-authority'
 
 const loadingVariants = cva(
   "flex items-center justify-center",
@@ -37,8 +37,10 @@ const loadingVariants = cva(
 )
 
 export interface LoadingProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof loadingVariants> {
+  extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'spinner' | 'dots' | 'pulse' | 'bars' | 'ring'
+  size?: 'sm' | 'default' | 'lg' | 'xl'
+  color?: 'primary' | 'secondary' | 'accent' | 'default'
   text?: string
 }
 
@@ -164,7 +166,7 @@ const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
     return (
       <div
         ref={ref}
-        className={cn(loadingVariants({ variant, size, color }), className)}
+        className={cn(loadingVariants({ variant: variant || 'spinner', size: size || 'default', color: color || 'default' }), className)}
         {...props}
       >
         <div className="flex flex-col items-center gap-4">

@@ -17,7 +17,7 @@ interface Modal {
   id: string
   type: string
   isOpen: boolean
-  props?: Record<string, any>
+  props?: Record<string, unknown>
 }
 
 interface UIState {
@@ -54,7 +54,7 @@ interface UIState {
   clearNotifications: () => void
 
   // Modal actions
-  openModal: (type: string, props?: Record<string, any>) => void
+  openModal: (type: string, props?: Record<string, unknown>) => void
   closeModal: (id?: string) => void
   closeAllModals: () => void
 
@@ -131,7 +131,7 @@ export const useUIStore = create<UIState>()(
         },
 
         // Modal actions
-        openModal: (type: string, props?: Record<string, any>) => {
+        openModal: (type: string, props?: Record<string, unknown>) => {
           const id = Math.random().toString(36).substring(7)
           const newModal: Modal = {
             id,
