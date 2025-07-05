@@ -16,8 +16,22 @@
       "command": "npx",
       "args": ["@jpisnice/shadcn-ui-mcp-server"],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "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e"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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Ae"
       }
+    },
+    "n8n-mcp": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "MCP_MODE=stdio",
+        "-e", "LOG_LEVEL=error",
+        "-e", "DISABLE_CONSOLE_OUTPUT=true",
+        "-e", "N8N_API_URL=https://n8n.einsof7.com",
+        "-e", "N8N_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YTM2MzJhNi0wMzhmLTQxNDQtYjk1MC0xZjM3ODAwNGVhMzQiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzUxMjY3NDAzfQ.WDdlAVCGbF8JkVKh0ZOfnc2b8saFhg0LAWdCGubGrlk",
+        "ghcr.io/czlonkowski/n8n-mcp:latest"
+      ]
     }
   }
 }

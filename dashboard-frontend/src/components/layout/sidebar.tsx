@@ -35,6 +35,7 @@ import {
   Zap
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { BlogSelector } from '@/components/common/blog-selector'
 
 interface NavItem {
   name: string
@@ -329,6 +330,13 @@ export function Sidebar() {
               )}
             </Button>
           </div>
+
+          {/* Blog Selector */}
+          {!isCollapsed && (
+            <div className="px-3 py-2 border-b">
+              <BlogSelector size="sm" className="w-full" />
+            </div>
+          )}
 
           {/* Main Navigation */}
           <div className="flex-1 overflow-y-auto px-3 py-4">

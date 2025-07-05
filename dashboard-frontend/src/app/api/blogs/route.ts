@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServiceClient } from '@/lib/supabase'
 import { z } from 'zod'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 const blogSchema = z.object({
   name: z.string().min(1),
-  url: z.string().url(),
+  domain: z.string().min(1),
   niche: z.string().optional(),
   description: z.string().optional(),
   wordpress_config: z.object({
@@ -23,6 +26,7 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseServiceClient()
     const { searchParams } = new URL(request.url)
     const active = searchParams.get('active')
+    const domain = searchParams.get('domain')
     
     let query = supabase
       .from('blogs')
@@ -30,6 +34,10 @@ export async function GET(request: NextRequest) {
     
     if (active === 'true') {
       query = query.eq('is_active', true)
+    }
+    
+    if (domain) {
+      query = query.eq('domain', domain)
     }
     
     const { data, error } = await query.order('created_at', { ascending: false })

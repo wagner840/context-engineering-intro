@@ -111,7 +111,7 @@ export const AnimatedCard = React.forwardRef<
     delay?: number
     animateOnce?: boolean
   }
->(({ className, delay = 0, animateOnce = true, ...props }) => {
+>(({ className, delay = 0, animateOnce = true, ...props }, ref) => {
   const [hasAnimated, setHasAnimated] = React.useState(false)
   const cardRef = React.useRef<HTMLDivElement>(null)
 
@@ -139,7 +139,7 @@ export const AnimatedCard = React.forwardRef<
 
   return (
     <Card
-      ref={cardRef}
+      ref={ref || cardRef}
       className={cn(
         "opacity-0",
         hasAnimated && "animate-in fade-in-50 slide-in-from-bottom-5",

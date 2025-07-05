@@ -1,107 +1,237 @@
 'use client'
 
-import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { PostEditor } from '@/components/posts/post-editor'
-import { PostsList } from '@/components/posts/posts-list'
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { ContentPost } from '@/types/database-extended'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, List, Edit3 } from 'lucide-react'
-import { useBlog } from '@/hooks/use-blogs'
-import { Loading } from '@/components/ui/loading'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { 
+  FileText, 
+  Plus, 
+  Search, 
+  MoreVertical,
+  Eye,
+  Edit,
+  Trash2,
+  Globe,
+  RefreshCw,
+  ArrowLeft
+} from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
-interface BlogPostsPageProps {
-  params: {
-    id: string
-  }
-}
-
-export default function BlogPostsPage({ params }: BlogPostsPageProps) {
-  const { id: blogId } = params
-  const searchParams = useSearchParams()
-  const editPostId = searchParams.get('edit')
-  const [activeTab, setActiveTab] = useState(editPostId ? 'editor' : 'list')
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(editPostId)
+export default function PostsPage() {
+  const { id: blogId } = useParams()
+  const router = useRouter()
   
-  const { data: blog, isLoading } = useBlog(blogId)
+  const [posts, setPosts] = useState<ContentPost[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
 
-  if (isLoading) {
+  useEffect(() => {
+    if (blogId) {
+      loadPosts()
+    }
+  }, [blogId])
+
+  const loadPosts = async () => {
+    setLoading(true)
+    
+    try {
+      const { data, error } = await supabase
+        .from('content_posts')
+        .select('*')
+        .eq('blog_id', blogId)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setPosts(data || [])
+    } catch (err) {
+      console.error('Erro ao carregar posts:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || post.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      published: 'default',
+      draft: 'secondary',
+      scheduled: 'outline',
+      trash: 'destructive'
+    } as const
+
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loading text="Carregando blog..." />
-      </div>
+      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
+        {status}
+      </Badge>
     )
   }
 
-  if (!blog) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Blog não encontrado</h2>
-          <p className="text-gray-600">O blog solicitado não foi encontrado.</p>
+      <div className="space-y-6">
+        <div className="h-12 bg-muted/20 rounded animate-pulse" />
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-24 bg-muted/20 rounded animate-pulse" />
+          ))}
         </div>
       </div>
     )
-  }
-
-  const handleNewPost = () => {
-    setSelectedPostId(null)
-    setActiveTab('editor')
-  }
-
-  const handleEditPost = (postId: string) => {
-    setSelectedPostId(postId)
-    setActiveTab('editor')
-  }
-
-  const handleBackToList = () => {
-    setSelectedPostId(null)
-    setActiveTab('list')
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Posts - {blog.name}
-        </h1>
-        <p className="text-gray-600">
-          Gerencie e edite os posts do seu blog
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => router.push('/blogs')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Gerenciar Posts</h1>
+            <p className="text-muted-foreground">
+              {filteredPosts.length} posts encontrados
+            </p>
+          </div>
+        </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex items-center justify-between">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="list" className="flex items-center gap-2">
-              <List className="h-4 w-4" />
-              Lista de Posts
-            </TabsTrigger>
-            <TabsTrigger value="editor" className="flex items-center gap-2">
-              <Edit3 className="h-4 w-4" />
-              Editor
-            </TabsTrigger>
-          </TabsList>
-
-          <Button onClick={handleNewPost} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          <Button onClick={loadPosts} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button onClick={() => router.push(`/blogs/${blogId}/posts/new`)}>
+            <Plus className="h-4 w-4 mr-2" />
             Novo Post
           </Button>
         </div>
+      </div>
 
-        <TabsContent value="list" className="space-y-6">
-          <PostsList blogId={blogId} onEditPost={handleEditPost} />
-        </TabsContent>
-
-        <TabsContent value="editor" className="space-y-6">
-          <PostEditor
-            blogId={blogId}
-            postId={selectedPostId}
-            onSave={handleBackToList}
-            onCancel={handleBackToList}
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar posts..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
           />
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3 py-2 border rounded-md bg-background"
+        >
+          <option value="all">Todos os status</option>
+          <option value="published">Publicados</option>
+          <option value="draft">Rascunhos</option>
+          <option value="scheduled">Agendados</option>
+        </select>
+      </div>
+
+      {/* Lista de Posts */}
+      <div className="space-y-4">
+        {filteredPosts.length === 0 ? (
+          <Card className="p-12 text-center">
+            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum post encontrado</h3>
+            <p className="text-muted-foreground mb-4">
+              Comece criando seu primeiro post
+            </p>
+            <Button onClick={() => router.push(`/blogs/${blogId}/posts/new`)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Post
+            </Button>
+          </Card>
+        ) : (
+          filteredPosts.map((post) => (
+            <Card key={post.id} className="p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="font-semibold">{post.title}</h3>
+                  {post.excerpt && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {post.excerpt}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                    {getStatusBadge(post.status)}
+                    <span>{post.word_count || 0} palavras</span>
+                    <span>{post.reading_time || 0}min leitura</span>
+                    {post.wordpress_post_id && (
+                      <span className="flex items-center gap-1">
+                        <Globe className="h-3 w-3" />
+                        WP #{post.wordpress_post_id}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => router.push(`/blogs/${blogId}/posts/${post.id}/view`)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => router.push(`/blogs/${blogId}/posts/${post.id}/edit`)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {post.wordpress_post_id && (
+                        <DropdownMenuItem
+                          onClick={() => window.open(post.slug, '_blank')}
+                        >
+                          <Globe className="h-4 w-4 mr-2" />
+                          Ver no WordPress
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem className="text-red-600">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   )
 }

@@ -14,10 +14,12 @@ import {
   Zap,
   AlertCircle,
   Plus,
-  Eye
+  Eye,
+  Settings
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
+import { SemanticSearchSetup } from './semantic-search-setup'
 
 interface SemanticSearchProps {
   query: string
@@ -44,6 +46,17 @@ interface SemanticSearchResponse {
 
 export function SemanticSearch({ query, blogId }: SemanticSearchProps) {
   
+  // Verificar se o sistema está configurado
+  const { data: setupStatus } = useQuery({
+    queryKey: ['semantic-search-status'],
+    queryFn: async () => {
+      const response = await fetch('/api/database/setup-semantic-functions')
+      if (!response.ok) return { semantic_search_ready: false }
+      return response.json()
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  })
+  
   const { data, isLoading, error } = useQuery({
     queryKey: ['semantic-search', query, blogId],
     queryFn: async (): Promise<SemanticSearchResponse> => {
@@ -69,6 +82,27 @@ export function SemanticSearch({ query, blogId }: SemanticSearchProps) {
     enabled: !!query.trim(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
+
+  // Mostrar setup se não estiver configurado
+  if (setupStatus && !setupStatus.semantic_search_ready) {
+    return (
+      <div className="space-y-6">
+        <Alert className="border-blue-200 bg-blue-50">
+          <Settings className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-2">
+              <p className="font-medium text-blue-900">Sistema de Busca Semântica não configurado</p>
+              <p className="text-blue-700 text-sm">
+                Para usar a busca semântica com IA, é necessário configurar as funções RPC no banco de dados.
+              </p>
+            </div>
+          </AlertDescription>
+        </Alert>
+        
+        <SemanticSearchSetup />
+      </div>
+    )
+  }
 
   const getSimilarityColor = (similarity: number) => {
     if (similarity >= 0.9) return 'text-green-600'

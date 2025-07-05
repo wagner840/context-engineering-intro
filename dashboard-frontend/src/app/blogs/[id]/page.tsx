@@ -7,28 +7,19 @@ import { Blog, ContentPost, MainKeyword } from '@/types/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Globe, 
   ArrowLeft,
-  Sync, 
+  RefreshCw, 
   FileText, 
   Key, 
   Database,
   Wifi,
   AlertCircle,
   CheckCircle,
-  TrendingUp,
   Users,
-  Clock,
-  Search,
-  Upload,
-  Download,
-  RefreshCw,
   ExternalLink,
   Plus
 } from 'lucide-react'
@@ -444,7 +435,7 @@ export default function BlogDetailPage() {
                   {syncing ? (
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
-                    <Sync className="h-4 w-4 mr-2" />
+                    <RefreshCw className="h-4 w-4 mr-2" />
                   )}
                   Sincronizar Posts
                 </Button>
@@ -605,25 +596,3 @@ export default function BlogDetailPage() {
   )
 }
 
-function BlogDashboardLoading() {
-  return (
-    <div className="space-y-6">
-      {/* Blog info skeleton */}
-      <div className="h-32 bg-muted/20 rounded-lg animate-pulse" />
-      
-      {/* Stats skeleton */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-24 bg-muted/20 rounded-lg animate-pulse" />
-        ))}
-      </div>
-      
-      {/* Posts skeleton */}
-      <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-20 bg-muted/20 rounded-lg animate-pulse" />
-        ))}
-      </div>
-    </div>
-  )
-}

@@ -1,14 +1,22 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { QueryProvider } from '@/providers/query-provider'
 import { SupabaseProvider } from '@/providers/supabase-provider'
+import { BlogProvider } from '@/contexts/blog-context'
+import { Sidebar } from '@/components/layout/sidebar'
 
 const inter = Inter({ 
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter'
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains-mono'
 })
 
 export const metadata: Metadata = {
@@ -29,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className={inter.variable}>
+    <html lang="pt-BR" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -39,11 +47,14 @@ export default function RootLayout({
         >
           <SupabaseProvider>
             <QueryProvider>
-              <div className="relative min-h-screen bg-background">
-                <main className="min-h-screen p-4">
-                  {children}
-                </main>
-              </div>
+              <BlogProvider>
+                <div className="relative min-h-screen bg-background">
+                  <Sidebar />
+                  <main className="min-h-screen md:pl-[260px] p-4">
+                    {children}
+                  </main>
+                </div>
+              </BlogProvider>
             </QueryProvider>
           </SupabaseProvider>
         </ThemeProvider>
