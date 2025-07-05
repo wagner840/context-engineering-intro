@@ -6,729 +6,737 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       blogs: {
         Row: {
-          id: string;
-          name: string;
-          domain: string;
-          niche: string | null;
+          created_at: string | null;
           description: string | null;
-          settings: Json;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
           domain: string;
-          niche?: string | null;
+          id: string;
+          is_active: boolean | null;
+          name: string;
+          niche: string | null;
+          settings: Json | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
           description?: string | null;
-          settings?: Json;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          domain: string;
+          id?: string;
+          is_active?: boolean | null;
+          name: string;
+          niche?: string | null;
+          settings?: Json | null;
+          updated_at?: string | null;
         };
         Update: {
-          id?: string;
-          name?: string;
+          created_at?: string | null;
+          description?: string | null;
           domain?: string;
-          niche?: string | null;
-          description?: string | null;
-          settings?: Json;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      authors: {
-        Row: {
-          id: string;
-          name: string;
-          email: string;
-          bio: string | null;
-          avatar_url: string | null;
-          social_links: Json;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
           id?: string;
-          name: string;
-          email: string;
-          bio?: string | null;
-          avatar_url?: string | null;
-          social_links?: Json;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
+          is_active?: boolean | null;
           name?: string;
-          email?: string;
-          bio?: string | null;
-          avatar_url?: string | null;
-          social_links?: Json;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          niche?: string | null;
+          settings?: Json | null;
+          updated_at?: string | null;
         };
-      };
-      main_keywords: {
-        Row: {
-          id: string;
-          blog_id: string;
-          keyword: string;
-          msv: number | null;
-          kw_difficulty: number | null;
-          cpc: number | null;
-          competition: string | null;
-          search_intent: string | null;
-          is_used: boolean;
-          created_at: string;
-          updated_at: string;
-          location: string;
-          language: string;
-          search_limit: number;
-        };
-        Insert: {
-          id?: string;
-          blog_id: string;
-          keyword: string;
-          msv?: number | null;
-          kw_difficulty?: number | null;
-          cpc?: number | null;
-          competition?: string | null;
-          search_intent?: string | null;
-          is_used?: boolean;
-          created_at?: string;
-          updated_at?: string;
-          location?: string;
-          language?: string;
-          search_limit?: number;
-        };
-        Update: {
-          id?: string;
-          blog_id?: string;
-          keyword?: string;
-          msv?: number | null;
-          kw_difficulty?: number | null;
-          cpc?: number | null;
-          competition?: string | null;
-          search_intent?: string | null;
-          is_used?: boolean;
-          created_at?: string;
-          updated_at?: string;
-          location?: string;
-          language?: string;
-          search_limit?: number;
-        };
-      };
-      keyword_variations: {
-        Row: {
-          id: string;
-          main_keyword_id: string;
-          keyword: string;
-          variation_type: string | null;
-          msv: number | null;
-          kw_difficulty: number | null;
-          cpc: number | null;
-          competition: string | null;
-          search_intent: string | null;
-          embedding: number[] | null;
-          created_at: string;
-          updated_at: string;
-          answer: string | null;
-        };
-        Insert: {
-          id?: string;
-          main_keyword_id: string;
-          keyword: string;
-          variation_type?: string | null;
-          msv?: number | null;
-          kw_difficulty?: number | null;
-          cpc?: number | null;
-          competition?: string | null;
-          search_intent?: string | null;
-          embedding?: number[] | null;
-          created_at?: string;
-          updated_at?: string;
-          answer?: string | null;
-        };
-        Update: {
-          id?: string;
-          main_keyword_id?: string;
-          keyword?: string;
-          variation_type?: string | null;
-          msv?: number | null;
-          kw_difficulty?: number | null;
-          cpc?: number | null;
-          competition?: string | null;
-          search_intent?: string | null;
-          embedding?: number[] | null;
-          created_at?: string;
-          updated_at?: string;
-          answer?: string | null;
-        };
+        Relationships: [];
       };
       content_posts: {
         Row: {
-          id: string;
-          blog_id: string;
           author_id: string;
-          title: string;
-          slug: string | null;
-          excerpt: string | null;
+          blog_id: string;
           content: string | null;
-          status: string;
+          created_at: string | null;
+          embedding: string | null;
+          excerpt: string | null;
           featured_image_url: string | null;
-          seo_title: string | null;
-          seo_description: string | null;
           focus_keyword: string | null;
-          readability_score: number | null;
-          seo_score: number | null;
-          word_count: number;
-          reading_time: number;
-          scheduled_at: string | null;
+          id: string;
           published_at: string | null;
-          embedding: number[] | null;
-          created_at: string;
-          updated_at: string;
+          readability_score: number | null;
+          reading_time: number | null;
+          scheduled_at: string | null;
+          seo_description: string | null;
+          seo_score: number | null;
+          seo_title: string | null;
+          slug: string | null;
+          status: string | null;
+          title: string;
+          updated_at: string | null;
+          word_count: number | null;
           wordpress_post_id: number | null;
         };
         Insert: {
-          id?: string;
-          blog_id: string;
           author_id: string;
-          title: string;
-          slug?: string | null;
-          excerpt?: string | null;
+          blog_id: string;
           content?: string | null;
-          status?: string;
+          created_at?: string | null;
+          embedding?: string | null;
+          excerpt?: string | null;
           featured_image_url?: string | null;
-          seo_title?: string | null;
-          seo_description?: string | null;
           focus_keyword?: string | null;
-          readability_score?: number | null;
-          seo_score?: number | null;
-          word_count?: number;
-          reading_time?: number;
-          scheduled_at?: string | null;
+          id?: string;
           published_at?: string | null;
-          embedding?: number[] | null;
-          created_at?: string;
-          updated_at?: string;
+          readability_score?: number | null;
+          reading_time?: number | null;
+          scheduled_at?: string | null;
+          seo_description?: string | null;
+          seo_score?: number | null;
+          seo_title?: string | null;
+          slug?: string | null;
+          status?: string | null;
+          title: string;
+          updated_at?: string | null;
+          word_count?: number | null;
           wordpress_post_id?: number | null;
         };
         Update: {
-          id?: string;
-          blog_id?: string;
           author_id?: string;
-          title?: string;
-          slug?: string | null;
-          excerpt?: string | null;
+          blog_id?: string;
           content?: string | null;
-          status?: string;
+          created_at?: string | null;
+          embedding?: string | null;
+          excerpt?: string | null;
           featured_image_url?: string | null;
-          seo_title?: string | null;
-          seo_description?: string | null;
           focus_keyword?: string | null;
-          readability_score?: number | null;
-          seo_score?: number | null;
-          word_count?: number;
-          reading_time?: number;
-          scheduled_at?: string | null;
+          id?: string;
           published_at?: string | null;
-          embedding?: number[] | null;
-          created_at?: string;
-          updated_at?: string;
+          readability_score?: number | null;
+          reading_time?: number | null;
+          scheduled_at?: string | null;
+          seo_description?: string | null;
+          seo_score?: number | null;
+          seo_title?: string | null;
+          slug?: string | null;
+          status?: string | null;
+          title?: string;
+          updated_at?: string | null;
+          word_count?: number | null;
           wordpress_post_id?: number | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "content_posts_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "authors";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_posts_blog_id_fkey";
+            columns: ["blog_id"];
+            isOneToOne: false;
+            referencedRelation: "blogs";
+            referencedColumns: ["id"];
+          },
+        ];
       };
-      keyword_clusters: {
+      authors: {
         Row: {
+          avatar_url: string | null;
+          bio: string | null;
+          created_at: string | null;
+          email: string;
           id: string;
-          blog_id: string;
-          cluster_name: string;
-          description: string | null;
-          cluster_score: number | null;
-          embedding: number[] | null;
-          created_at: string;
-          updated_at: string;
-          main_keyword_id: string | null;
+          is_active: boolean | null;
+          name: string;
+          social_links: Json | null;
+          updated_at: string | null;
         };
         Insert: {
+          avatar_url?: string | null;
+          bio?: string | null;
+          created_at?: string | null;
+          email: string;
           id?: string;
-          blog_id: string;
-          cluster_name: string;
-          description?: string | null;
-          cluster_score?: number | null;
-          embedding?: number[] | null;
-          created_at?: string;
-          updated_at?: string;
-          main_keyword_id?: string | null;
+          is_active?: boolean | null;
+          name: string;
+          social_links?: Json | null;
+          updated_at?: string | null;
         };
         Update: {
+          avatar_url?: string | null;
+          bio?: string | null;
+          created_at?: string | null;
+          email?: string;
           id?: string;
-          blog_id?: string;
-          cluster_name?: string;
-          description?: string | null;
-          cluster_score?: number | null;
-          embedding?: number[] | null;
-          created_at?: string;
-          updated_at?: string;
-          main_keyword_id?: string | null;
+          is_active?: boolean | null;
+          name?: string;
+          social_links?: Json | null;
+          updated_at?: string | null;
         };
+        Relationships: [];
+      };
+      main_keywords: {
+        Row: {
+          blog_id: string;
+          competition: string | null;
+          cpc: number | null;
+          created_at: string | null;
+          id: string;
+          is_used: boolean | null;
+          keyword: string;
+          kw_difficulty: number | null;
+          language: string | null;
+          location: string | null;
+          msv: number | null;
+          search_intent: string | null;
+          Search_limit: number | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          blog_id: string;
+          competition?: string | null;
+          cpc?: number | null;
+          created_at?: string | null;
+          id?: string;
+          is_used?: boolean | null;
+          keyword: string;
+          kw_difficulty?: number | null;
+          language?: string | null;
+          location?: string | null;
+          msv?: number | null;
+          search_intent?: string | null;
+          Search_limit?: number | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          blog_id?: string;
+          competition?: string | null;
+          cpc?: number | null;
+          created_at?: string | null;
+          id?: string;
+          is_used?: boolean | null;
+          keyword?: string;
+          kw_difficulty?: number | null;
+          language?: string | null;
+          location?: string | null;
+          msv?: number | null;
+          search_intent?: string | null;
+          Search_limit?: number | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "main_keywords_blog_id_fkey";
+            columns: ["blog_id"];
+            isOneToOne: false;
+            referencedRelation: "blogs";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       content_opportunities_clusters: {
         Row: {
-          id: string;
-          blog_id: string;
-          cluster_id: string;
-          title: string;
-          description: string | null;
-          content_type: string;
-          priority_score: number;
-          estimated_traffic: number;
-          difficulty_score: number;
-          status: string;
-          target_keywords: string[];
-          content_outline: string | null;
-          notes: string | null;
           assigned_to: string | null;
+          blog_id: string;
+          cluster_id: string;
+          content_outline: string | null;
+          content_type: string | null;
+          created_at: string | null;
+          description: string | null;
+          difficulty_score: number | null;
           due_date: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          blog_id: string;
-          cluster_id: string;
+          embedding: string | null;
+          estimated_traffic: number | null;
+          final_description: string | null;
+          final_title: string | null;
+          id: string;
+          main_keyword_id: string | null;
+          notes: string | null;
+          priority_score: number | null;
+          status: string | null;
+          target_keywords: string[] | null;
           title: string;
-          description?: string | null;
-          content_type?: string;
-          priority_score?: number;
-          estimated_traffic?: number;
-          difficulty_score?: number;
-          status?: string;
-          target_keywords?: string[];
-          content_outline?: string | null;
-          notes?: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
           assigned_to?: string | null;
+          blog_id: string;
+          cluster_id: string;
+          content_outline?: string | null;
+          content_type?: string | null;
+          created_at?: string | null;
+          description?: string | null;
+          difficulty_score?: number | null;
           due_date?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          embedding?: string | null;
+          estimated_traffic?: number | null;
+          final_description?: string | null;
+          final_title?: string | null;
+          id?: string;
+          main_keyword_id?: string | null;
+          notes?: string | null;
+          priority_score?: number | null;
+          status?: string | null;
+          target_keywords?: string[] | null;
+          title: string;
+          updated_at?: string | null;
         };
         Update: {
-          id?: string;
+          assigned_to?: string | null;
           blog_id?: string;
           cluster_id?: string;
+          content_outline?: string | null;
+          content_type?: string | null;
+          created_at?: string | null;
+          description?: string | null;
+          difficulty_score?: number | null;
+          due_date?: string | null;
+          embedding?: string | null;
+          estimated_traffic?: number | null;
+          final_description?: string | null;
+          final_title?: string | null;
+          id?: string;
+          main_keyword_id?: string | null;
+          notes?: string | null;
+          priority_score?: number | null;
+          status?: string | null;
+          target_keywords?: string[] | null;
           title?: string;
-          description?: string | null;
-          content_type?: string;
-          priority_score?: number;
-          estimated_traffic?: number;
-          difficulty_score?: number;
-          status?: string;
-          target_keywords?: string[];
-          content_outline?: string | null;
-          notes?: string | null;
-          assigned_to?: string | null;
-          due_date?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          updated_at?: string | null;
         };
-      };
-      serp_results: {
-        Row: {
-          id: string;
-          main_keyword_id: string;
-          position: number;
-          title: string | null;
-          url: string | null;
-          description: string | null;
-          domain: string | null;
-          type: string;
-          features: Json;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          main_keyword_id: string;
-          position: number;
-          title?: string | null;
-          url?: string | null;
-          description?: string | null;
-          domain?: string | null;
-          type?: string;
-          features?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          main_keyword_id?: string;
-          position?: number;
-          title?: string | null;
-          url?: string | null;
-          description?: string | null;
-          domain?: string | null;
-          type?: string;
-          features?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      analytics_metrics: {
-        Row: {
-          id: string;
-          blog_id: string;
-          metric_name: string;
-          metric_value: number;
-          metric_date: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          blog_id: string;
-          metric_name: string;
-          metric_value: number;
-          metric_date: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          blog_id?: string;
-          metric_name?: string;
-          metric_value?: number;
-          metric_date?: string;
-          created_at?: string;
-        };
-      };
-      media_assets: {
-        Row: {
-          id: string;
-          blog_id: string;
-          file_name: string;
-          file_url: string;
-          file_type: string;
-          file_size: number | null;
-          alt_text: string | null;
-          caption: string | null;
-          wordpress_media_id: number | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          blog_id: string;
-          file_name: string;
-          file_url: string;
-          file_type: string;
-          file_size?: number | null;
-          alt_text?: string | null;
-          caption?: string | null;
-          wordpress_media_id?: number | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          blog_id?: string;
-          file_name?: string;
-          file_url?: string;
-          file_type?: string;
-          file_size?: number | null;
-          alt_text?: string | null;
-          caption?: string | null;
-          wordpress_media_id?: number | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      blog_categories: {
-        Row: {
-          id: string;
-          blog_id: string;
-          name: string;
-          slug: string;
-          description: string | null;
-          wordpress_category_id: number | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          blog_id: string;
-          name: string;
-          slug: string;
-          description?: string | null;
-          wordpress_category_id?: number | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          blog_id?: string;
-          name?: string;
-          slug?: string;
-          description?: string | null;
-          wordpress_category_id?: number | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      blog_tags: {
-        Row: {
-          id: string;
-          blog_id: string;
-          name: string;
-          slug: string;
-          description: string | null;
-          wordpress_tag_id: number | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          blog_id: string;
-          name: string;
-          slug: string;
-          description?: string | null;
-          wordpress_tag_id?: number | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          blog_id?: string;
-          name?: string;
-          slug?: string;
-          description?: string | null;
-          wordpress_tag_id?: number | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      keyword_categories: {
-        Row: {
-          id: string;
-          blog_id: string;
-          keyword_variation_id: string | null;
-          name: string;
-          description: string | null;
-          color: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          blog_id: string;
-          keyword_variation_id?: string | null;
-          name: string;
-          description?: string | null;
-          color?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          blog_id?: string;
-          keyword_variation_id?: string | null;
-          name?: string;
-          description?: string | null;
-          color?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      cluster_keywords: {
-        Row: {
-          id: string;
-          cluster_id: string;
-          keyword_variation_id: string;
-          relevance_score: number | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          cluster_id: string;
-          keyword_variation_id: string;
-          relevance_score?: number | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          cluster_id?: string;
-          keyword_variation_id?: string;
-          relevance_score?: number | null;
-          created_at?: string;
-        };
+        Relationships: [
+          {
+            foreignKeyName: "content_opportunities_clusters_assigned_to_fkey";
+            columns: ["assigned_to"];
+            isOneToOne: false;
+            referencedRelation: "authors";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_opportunities_clusters_blog_id_fkey";
+            columns: ["blog_id"];
+            isOneToOne: false;
+            referencedRelation: "blogs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_opportunities_clusters_cluster_id_fkey";
+            columns: ["cluster_id"];
+            isOneToOne: false;
+            referencedRelation: "keyword_clusters";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_opportunities_clusters_main_keyword_id_fkey";
+            columns: ["main_keyword_id"];
+            isOneToOne: false;
+            referencedRelation: "main_keywords";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       content_opportunities_categories: {
         Row: {
-          id: string;
-          blog_id: string;
-          keyword_category_id: string;
-          title: string;
-          description: string | null;
-          content_type: string;
-          priority_score: number;
-          estimated_traffic: number | null;
-          difficulty_score: number | null;
-          status: string;
-          target_keywords: string[];
-          content_outline: string | null;
-          notes: string | null;
           assigned_to: string | null;
+          blog_id: string;
+          category_id: string;
+          content_outline: string | null;
+          created_at: string | null;
+          description: string | null;
+          difficulty_score: number | null;
           due_date: string | null;
-          created_at: string;
-          updated_at: string;
+          embedding: string | null;
+          estimated_traffic: number | null;
+          id: string;
+          main_keyword_id: string | null;
+          notes: string | null;
+          priority_score: number | null;
+          status: string | null;
+          target_keywords: string[] | null;
+          title: string;
+          updated_at: string | null;
         };
         Insert: {
-          id?: string;
-          blog_id: string;
-          keyword_category_id: string;
-          title: string;
-          description?: string | null;
-          content_type?: string;
-          priority_score?: number;
-          estimated_traffic?: number | null;
-          difficulty_score?: number | null;
-          status?: string;
-          target_keywords?: string[];
-          content_outline?: string | null;
-          notes?: string | null;
           assigned_to?: string | null;
+          blog_id: string;
+          category_id: string;
+          content_outline?: string | null;
+          created_at?: string | null;
+          description?: string | null;
+          difficulty_score?: number | null;
           due_date?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          embedding?: string | null;
+          estimated_traffic?: number | null;
+          id?: string;
+          main_keyword_id?: string | null;
+          notes?: string | null;
+          priority_score?: number | null;
+          status?: string | null;
+          target_keywords?: string[] | null;
+          title: string;
+          updated_at?: string | null;
         };
         Update: {
-          id?: string;
-          blog_id?: string;
-          keyword_category_id?: string;
-          title?: string;
-          description?: string | null;
-          content_type?: string;
-          priority_score?: number;
-          estimated_traffic?: number | null;
-          difficulty_score?: number | null;
-          status?: string;
-          target_keywords?: string[];
-          content_outline?: string | null;
-          notes?: string | null;
           assigned_to?: string | null;
+          blog_id?: string;
+          category_id?: string;
+          content_outline?: string | null;
+          created_at?: string | null;
+          description?: string | null;
+          difficulty_score?: number | null;
           due_date?: string | null;
-          created_at?: string;
-          updated_at?: string;
+          embedding?: string | null;
+          estimated_traffic?: number | null;
+          id?: string;
+          main_keyword_id?: string | null;
+          notes?: string | null;
+          priority_score?: number | null;
+          status?: string | null;
+          target_keywords?: string[] | null;
+          title?: string;
+          updated_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "content_opportunities_categories_assigned_to_fkey";
+            columns: ["assigned_to"];
+            isOneToOne: false;
+            referencedRelation: "authors";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_opportunities_categories_blog_id_fkey";
+            columns: ["blog_id"];
+            isOneToOne: false;
+            referencedRelation: "blogs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_opportunities_categories_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "keyword_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_opportunities_categories_main_keyword_id_fkey";
+            columns: ["main_keyword_id"];
+            isOneToOne: false;
+            referencedRelation: "main_keywords";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      keyword_clusters: {
+        Row: {
+          blog_id: string;
+          cluster_name: string;
+          cluster_score: number | null;
+          created_at: string | null;
+          description: string | null;
+          embedding: string | null;
+          id: string;
+          main_keyword_id: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          blog_id: string;
+          cluster_name: string;
+          cluster_score?: number | null;
+          created_at?: string | null;
+          description?: string | null;
+          embedding?: string | null;
+          id?: string;
+          main_keyword_id?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          blog_id?: string;
+          cluster_name?: string;
+          cluster_score?: number | null;
+          created_at?: string | null;
+          description?: string | null;
+          embedding?: string | null;
+          id?: string;
+          main_keyword_id?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "keyword_clusters_blog_id_fkey";
+            columns: ["blog_id"];
+            isOneToOne: false;
+            referencedRelation: "blogs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "keyword_clusters_main_keyword_id_fkey";
+            columns: ["main_keyword_id"];
+            isOneToOne: false;
+            referencedRelation: "main_keywords";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      keyword_categories: {
+        Row: {
+          blog_id: string;
+          created_at: string | null;
+          description: string | null;
+          id: string;
+          keyword_variation_id: string | null;
+          name: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          blog_id: string;
+          created_at?: string | null;
+          description?: string | null;
+          id?: string;
+          keyword_variation_id?: string | null;
+          name: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          blog_id?: string;
+          created_at?: string | null;
+          description?: string | null;
+          id?: string;
+          keyword_variation_id?: string | null;
+          name?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "keyword_categories_blog_id_fkey";
+            columns: ["blog_id"];
+            isOneToOne: false;
+            referencedRelation: "blogs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "keyword_categories_keyword_variation_id_fkey";
+            columns: ["keyword_variation_id"];
+            isOneToOne: false;
+            referencedRelation: "keyword_variations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      keyword_variations: {
+        Row: {
+          answer: string | null;
+          competition: string | null;
+          cpc: number | null;
+          created_at: string | null;
+          embedding: string | null;
+          id: string;
+          keyword: string;
+          kw_difficulty: number | null;
+          main_keyword_id: string;
+          msv: number | null;
+          search_intent: string | null;
+          updated_at: string | null;
+          variation_type: string | null;
+        };
+        Insert: {
+          answer?: string | null;
+          competition?: string | null;
+          cpc?: number | null;
+          created_at?: string | null;
+          embedding?: string | null;
+          id?: string;
+          keyword: string;
+          kw_difficulty?: number | null;
+          main_keyword_id: string;
+          msv?: number | null;
+          search_intent?: string | null;
+          updated_at?: string | null;
+          variation_type?: string | null;
+        };
+        Update: {
+          answer?: string | null;
+          competition?: string | null;
+          cpc?: number | null;
+          created_at?: string | null;
+          embedding?: string | null;
+          id?: string;
+          keyword?: string;
+          kw_difficulty?: number | null;
+          main_keyword_id?: string;
+          msv?: number | null;
+          search_intent?: string | null;
+          updated_at?: string | null;
+          variation_type?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "keyword_variations_main_keyword_id_fkey";
+            columns: ["main_keyword_id"];
+            isOneToOne: false;
+            referencedRelation: "main_keywords";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      media_assets: {
+        Row: {
+          alt_text: string | null;
+          blog_id: string;
+          caption: string | null;
+          created_at: string | null;
+          file_path: string | null;
+          file_size: number | null;
+          file_type: string | null;
+          file_url: string | null;
+          filename: string | null;
+          id: string;
+          is_featured: boolean | null;
+          metadata: Json | null;
+          mime_type: string | null;
+          original_filename: string | null;
+          post_id: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          alt_text?: string | null;
+          blog_id: string;
+          caption?: string | null;
+          created_at?: string | null;
+          file_path?: string | null;
+          file_size?: number | null;
+          file_type?: string | null;
+          file_url?: string | null;
+          filename?: string | null;
+          id?: string;
+          is_featured?: boolean | null;
+          metadata?: Json | null;
+          mime_type?: string | null;
+          original_filename?: string | null;
+          post_id?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          alt_text?: string | null;
+          blog_id?: string;
+          caption?: string | null;
+          created_at?: string | null;
+          file_path?: string | null;
+          file_size?: number | null;
+          file_type?: string | null;
+          file_url?: string | null;
+          filename?: string | null;
+          id?: string;
+          is_featured?: boolean | null;
+          metadata?: Json | null;
+          mime_type?: string | null;
+          original_filename?: string | null;
+          post_id?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_blog_id_fkey";
+            columns: ["blog_id"];
+            isOneToOne: false;
+            referencedRelation: "blogs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "media_assets_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "content_posts";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {
-      executive_dashboard: {
-        Row: {
-          blog_name: string;
-          niche: string | null;
-          total_keywords: number;
-          total_variations: number;
-          total_clusters: number;
-          total_posts: number;
-          published_posts: number;
-          used_keywords: number;
-          avg_msv: number;
-          avg_difficulty: number;
-          avg_cpc: number;
-          total_opportunities: number;
-        };
-      };
-      keyword_opportunities: {
-        Row: {
-          blog_name: string;
-          keyword: string;
-          msv: number | null;
-          kw_difficulty: number | null;
-          cpc: number | null;
-          competition: string | null;
-          search_intent: string | null;
-          is_used: boolean;
-          opportunity_score: number;
-          variations_count: number;
-          serp_results_count: number;
-          priority_level: string;
-        };
-      };
-      production_pipeline: {
-        Row: {
-          blog_name: string;
-          title: string;
-          status: string;
-          word_count: number;
-          seo_score: number | null;
-          readability_score: number | null;
-          author_name: string;
-          scheduled_at: string | null;
-          published_at: string | null;
-          created_at: string;
-          days_in_status: number | null;
-        };
-      };
-      serp_competition_analysis: {
-        Row: {
-          keyword: string;
-          position: number;
-          url: string;
-          title: string;
-          domain: string;
-          competition_level: string;
-          opportunity_score: number;
-        };
-      };
+      [_ in never]: never;
     };
     Functions: {
-      find_similar_keywords: {
-        Args: {
-          query_embedding: number[];
-          match_threshold: number;
-          match_count: number;
-          blog_id?: string;
-        };
-        Returns: {
-          id: string;
-          keyword: string;
-          similarity: number;
-        }[];
-      };
-      calculate_keyword_opportunity_score: {
-        Args: {
-          msv: number | null;
-          kw_difficulty: number | null;
-          cpc: number | null;
-        };
-        Returns: number;
-      };
-      find_similar_posts: {
-        Args: {
-          query_embedding: number[];
-          match_threshold: number;
-          match_count: number;
-          blog_id?: string;
-        };
-        Returns: {
-          id: string;
-          title: string;
-          similarity: number;
-        }[];
-      };
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
-}
+};
+
+type DefaultSchema = Database[Extract<keyof Database, "public">];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database;
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database;
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database;
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
 
 // Types para todas as tabelas do banco PAWA
 export interface Blog {
@@ -1201,21 +1209,21 @@ export type DatabaseInsert<T> = Omit<T, "id" | "created_at" | "updated_at">;
 export type DatabaseUpdate<T> = Partial<DatabaseInsert<T>>;
 
 export interface Post {
-  id: string
-  title: string
-  content: string
-  excerpt?: string
-  status: 'draft' | 'published' | 'scheduled'
-  featured_image?: string
-  categories?: string[]
-  tags?: string[]
-  author_id: string
-  blog_id: string
-  blog_name?: string
-  created_at: string
-  updated_at: string
-  published_at?: string
-  seo_title?: string
-  seo_description?: string
-  seo_keywords?: string[]
+  id: string;
+  title: string;
+  content: string;
+  excerpt?: string;
+  status: "draft" | "published" | "scheduled";
+  featured_image?: string;
+  categories?: string[];
+  tags?: string[];
+  author_id: string;
+  blog_id: string;
+  blog_name?: string;
+  created_at: string;
+  updated_at: string;
+  published_at?: string;
+  seo_title?: string;
+  seo_description?: string;
+  seo_keywords?: string[];
 }
