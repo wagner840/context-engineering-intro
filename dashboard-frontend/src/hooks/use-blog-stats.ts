@@ -89,8 +89,7 @@ export function useBlogStats() {
       const [
         keywordVariationsResult,
         contentPostsResult,
-        contentOpportunitiesCategoriesResult,
-        contentOpportunitiesClustersResult,
+        opportunitiesResult,
         keywordCategoriesResult,
         keywordClustersResult,
         mediaResult
@@ -103,11 +102,8 @@ export function useBlogStats() {
         // Content posts deste blog
         supabase.from('content_posts').select('*', { count: 'exact' }).eq('blog_id', blogId),
         
-        // Content opportunities categories deste blog
-        supabase.from('content_opportunities_categories').select('id', { count: 'exact' }).eq('blog_id', blogId),
-        
-        // Content opportunities clusters deste blog
-        supabase.from('content_opportunities_clusters').select('id', { count: 'exact' }).eq('blog_id', blogId),
+        // Using keyword_opportunities view instead
+        supabase.from('keyword_opportunities').select('id', { count: 'exact' }).eq('blog_name', blogId),
         
         // Keyword categories baseadas nas main_keywords deste blog
         mainKeywordIds.length > 0

@@ -58,7 +58,7 @@ export default function PipelinePage() {
     published: [],
     archived: [],
   };
-  items.forEach((p: Post) => {
+  items.forEach((p: any) => {
     grouped[p.status as Status]?.push(p);
   });
 
@@ -97,7 +97,7 @@ export default function PipelinePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{items.filter(i => i.status === 'published').length}</div>
+            <div className="text-2xl font-bold">{items.filter((i: any) => i.status === 'published').length}</div>
             <p className="text-xs text-gray-600">Este mês</p>
           </CardContent>
         </Card>
@@ -110,7 +110,7 @@ export default function PipelinePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{items.filter(i => i.status === 'scheduled').length}</div>
+            <div className="text-2xl font-bold">{items.filter((i: any) => i.status === 'scheduled').length}</div>
             <p className="text-xs text-gray-600">Próximos 7 dias</p>
           </CardContent>
         </Card>
@@ -123,7 +123,7 @@ export default function PipelinePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{items.filter(i => i.status === 'review').length}</div>
+            <div className="text-2xl font-bold">{items.filter((i: any) => i.status === 'review').length}</div>
             <p className="text-xs text-gray-600">Aguardando aprovação</p>
           </CardContent>
         </Card>
@@ -209,7 +209,7 @@ export default function PipelinePage() {
                           {post.title}
                         </Link>
                         <p className="text-xs text-muted-foreground">
-                          {post.blog_name} • {formatDate(post.created_at)}
+                          {(post as any).blog_name || 'Blog'} • {formatDate(post.created_at)}
                         </p>
 
                         <Select

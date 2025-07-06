@@ -320,8 +320,8 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
                 </p>
               </div>
               
-              <Badge variant={syncSettings.auto_sync_enabled ? 'default' : 'secondary'}>
-                {syncSettings.auto_sync_enabled ? 'Ativada' : 'Desativada'}
+              <Badge variant={(syncSettings as any).auto_sync_enabled ? 'default' : 'secondary'}>
+                {(syncSettings as any).auto_sync_enabled ? 'Ativada' : 'Desativada'}
               </Badge>
             </div>
           </CardContent>

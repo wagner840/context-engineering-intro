@@ -87,12 +87,12 @@ export function BlogRealtimeMonitor({
           filter: blogId ? `blog_id=eq.${blogId}` : undefined,
         },
         (payload) => {
-          const blog = blogs.get(payload.new?.blog_id || payload.old?.blog_id);
+          const blog = blogs.get((payload as any).new?.blog_id || (payload as any).old?.blog_id);
           addEvent({
             type: payload.eventType as any,
             table: "content_posts",
             record: payload.new || payload.old,
-            blogId: payload.new?.blog_id || payload.old?.blog_id,
+            blogId: (payload as any).new?.blog_id || (payload as any).old?.blog_id,
             blogName: blog?.name,
           });
         }
@@ -115,12 +115,12 @@ export function BlogRealtimeMonitor({
           filter: blogId ? `blog_id=eq.${blogId}` : undefined,
         },
         (payload) => {
-          const blog = blogs.get(payload.new?.blog_id || payload.old?.blog_id);
+          const blog = blogs.get((payload as any).new?.blog_id || (payload as any).old?.blog_id);
           addEvent({
             type: payload.eventType as any,
             table: "main_keywords",
             record: payload.new || payload.old,
-            blogId: payload.new?.blog_id || payload.old?.blog_id,
+            blogId: (payload as any).new?.blog_id || (payload as any).old?.blog_id,
             blogName: blog?.name,
           });
         }
@@ -141,12 +141,12 @@ export function BlogRealtimeMonitor({
           filter: blogId ? `blog_id=eq.${blogId}` : undefined,
         },
         (payload) => {
-          const blog = blogs.get(payload.new?.blog_id || payload.old?.blog_id);
+          const blog = blogs.get((payload as any).new?.blog_id || (payload as any).old?.blog_id);
           addEvent({
             type: payload.eventType as any,
             table: "content_opportunities",
             record: payload.new || payload.old,
-            blogId: payload.new?.blog_id || payload.old?.blog_id,
+            blogId: (payload as any).new?.blog_id || (payload as any).old?.blog_id,
             blogName: blog?.name,
           });
         }
@@ -167,12 +167,12 @@ export function BlogRealtimeMonitor({
           filter: blogId ? `blog_id=eq.${blogId}` : undefined,
         },
         (payload) => {
-          const blog = blogs.get(payload.new?.blog_id || payload.old?.blog_id);
+          const blog = blogs.get((payload as any).new?.blog_id || (payload as any).old?.blog_id);
           addEvent({
             type: payload.eventType as any,
             table: "media_assets",
             record: payload.new || payload.old,
-            blogId: payload.new?.blog_id || payload.old?.blog_id,
+            blogId: (payload as any).new?.blog_id || (payload as any).old?.blog_id,
             blogName: blog?.name,
           });
         }
@@ -229,9 +229,9 @@ export function BlogRealtimeMonitor({
 
   const getEventDescription = (event: RealtimeEvent) => {
     const action =
-      event.type === "INSERT"
+      event.type === "insert"
         ? "criado"
-        : event.type === "UPDATE"
+        : event.type === "update"
           ? "atualizado"
           : "removido";
 
@@ -316,9 +316,9 @@ export function BlogRealtimeMonitor({
 
                   <Badge
                     variant={
-                      event.type === "INSERT"
+                      event.type === "insert"
                         ? "default"
-                        : event.type === "UPDATE"
+                        : event.type === "update"
                           ? "secondary"
                           : "destructive"
                     }

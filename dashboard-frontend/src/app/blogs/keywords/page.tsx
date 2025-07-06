@@ -252,7 +252,7 @@ export default function BlogKeywordsPage({
             </div>
           ) : (
             <div className="space-y-4">
-              {keywords.map((keyword, index) => (
+              {keywords.map((keyword: any, index: number) => (
                 <motion.div
                   key={keyword.id}
                   initial={{ opacity: 0, y: 20 }}

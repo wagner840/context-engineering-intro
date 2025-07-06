@@ -21,7 +21,7 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
     competition: undefined,
     search_intent: undefined,
     is_used: undefined,
-    min_msv: undefined,
+    min_volume: undefined,
     max_difficulty: undefined,
   })
 
@@ -146,8 +146,8 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
 
             <Input
               placeholder="MSV mínimo"
-              value={filters.min_msv}
-              onChange={(e) => setFilters(prev => ({ ...prev, min_msv: Number(e.target.value) }))}
+              value={filters.min_volume}
+              onChange={(e) => setFilters(prev => ({ ...prev, min_volume: Number(e.target.value) }))}
               type="number"
             />
 
@@ -195,7 +195,7 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
             </div>
           ) : (
             <div className="space-y-4">
-              {keywords.map((keyword, index: number) => (
+              {keywords.map((keyword: any, index: number) => (
                 <motion.div
                   key={keyword.id}
                   initial={{ opacity: 0, y: 20 }}
