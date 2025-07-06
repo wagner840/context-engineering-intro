@@ -115,8 +115,8 @@ export function useKeywordVariations(mainKeywordId: string) {
 export function useCreateKeyword() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (keyword: DatabaseInsert<MainKeyword>) => {
+  return useMutation<MainKeyword, Error, DatabaseInsert<"main_keywords">>({
+    mutationFn: async (keyword) => {
       const { data, error } = await supabase
         .from("main_keywords")
         .insert(keyword)
@@ -136,11 +136,12 @@ export function useCreateKeyword() {
 export function useUpdateKeyword() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async ({
-      id,
-      ...updates
-    }: DatabaseUpdate<MainKeyword> & { id: string }) => {
+  return useMutation<
+    MainKeyword,
+    Error,
+    DatabaseUpdate<"main_keywords"> & { id: string }
+  >({
+    mutationFn: async ({ id, ...updates }) => {
       const { data, error } = await supabase
         .from("main_keywords")
         .update(updates)
@@ -181,8 +182,12 @@ export function useDeleteKeyword() {
 export function useCreateKeywordVariation() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (variation: DatabaseInsert<KeywordVariation>) => {
+  return useMutation<
+    KeywordVariation,
+    Error,
+    DatabaseInsert<"keyword_variations">
+  >({
+    mutationFn: async (variation) => {
       const { data, error } = await supabase
         .from("keyword_variations")
         .insert(variation)
@@ -205,8 +210,8 @@ export function useCreateKeywordVariation() {
 export function useBulkCreateKeywords() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (keywords: DatabaseInsert<MainKeyword>[]) => {
+  return useMutation<MainKeyword[], Error, DatabaseInsert<"main_keywords">[]>({
+    mutationFn: async (keywords) => {
       const { data, error } = await supabase
         .from("main_keywords")
         .insert(keywords)
@@ -223,10 +228,12 @@ export function useBulkCreateKeywords() {
 }
 
 export function useSemanticKeywordSearch() {
-  return useMutation({
-    mutationFn: async (
-      request: SemanticSearchRequest
-    ): Promise<SemanticSearchResult<KeywordVariation>[]> => {
+  return useMutation<
+    SemanticSearchResult<{ id: string; keyword: string; similarity: number }>[],
+    Error,
+    SemanticSearchRequest
+  >({
+    mutationFn: async (request) => {
       // First, generate embedding for the query
       const embeddingResponse = await fetch("/api/embeddings", {
         method: "POST",
@@ -249,11 +256,20 @@ export function useSemanticKeywordSearch() {
 
       if (error) throw error;
 
-      return data.map((item: KeywordVariation, index: number) => ({
-        item,
-        similarity: item.similarity,
-        rank: index + 1,
-      }));
+      return data.map(
+        (
+          item: { id: string; keyword: string; similarity: number },
+          index: number
+        ) => ({
+          item: {
+            id: item.id,
+            keyword: item.keyword,
+            similarity: item.similarity,
+          },
+          similarity: item.similarity,
+          rank: index + 1,
+        })
+      );
     },
   });
 }

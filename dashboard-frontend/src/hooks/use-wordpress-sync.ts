@@ -1,167 +1,221 @@
-'use client'
+"use client";
 
-import { useState, useCallback } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNotifications } from '@/store/ui-store'
-import { supabase } from '@/lib/supabase'
-import { getWordPressClient } from '@/lib/wordpress'
-import { useBlog } from '@/contexts/blog-context'
+import { useState, useCallback } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNotifications } from "@/store/ui-store";
+import { supabase } from "@/lib/supabase";
+import { getWordPressClient } from "@/lib/wordpress";
+import { useBlog } from "@/contexts/blog-context";
+import type { Tables } from "@/types/database";
+import type {
+  WordPressCreatePostRequest,
+  WordPressResponse,
+} from "@/types/wordpress";
 
 export interface SyncResult {
-  success: boolean
-  message: string
+  success: boolean;
+  message: string;
   details?: {
-    synced: number
-    errors: number
-    errorDetails?: string[]
-  }
+    synced: number;
+    errors: number;
+    errorDetails?: string[];
+  };
 }
 
 export interface SyncStatus {
-  isRunning: boolean
-  progress: number
-  currentTask: string
-  results?: SyncResult
+  isRunning: boolean;
+  progress: number;
+  currentTask: string;
+  results?: SyncResult;
 }
 
 export function useWordPressSync(blogId?: string) {
-  const { activeBlog } = useBlog()
-  const currentBlogId = blogId || (activeBlog && activeBlog !== 'all' ? activeBlog.id : '')
-  
+  const { activeBlog } = useBlog();
+  const currentBlogId =
+    blogId || (activeBlog && activeBlog !== "all" ? activeBlog.id : "");
+
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     isRunning: false,
     progress: 0,
-    currentTask: '',
-  })
+    currentTask: "",
+  });
 
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotifications()
+  const [syncingPosts, setSyncingPosts] = useState<Set<string>>(new Set());
+
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotifications();
+
+  // Helper function to create WordPress post
+  const createWordPressPost = async (
+    blog: Tables<"blogs">,
+    postData: WordPressCreatePostRequest
+  ): Promise<WordPressResponse> => {
+    const client = await getWordPressClient(blog.id);
+
+    // Converter para o formato esperado pelo WordPress API
+    const wpPostData = {
+      title: { rendered: postData.title },
+      content: { rendered: postData.content, protected: false },
+      excerpt: postData.excerpt
+        ? { rendered: postData.excerpt, protected: false }
+        : undefined,
+      status: postData.status,
+      meta: postData.meta || {},
+    };
+
+    return (await client.createPost(wpPostData)) as WordPressResponse;
+  };
+
+  // Helper function to log sync operation
+  const logSync = async (
+    blogId: string,
+    syncType: "wp_to_supabase" | "supabase_to_wp",
+    status: "pending" | "running" | "completed" | "failed",
+    details?: any
+  ) => {
+    try {
+      await supabase.from("sync_logs").insert({
+        blog_id: blogId,
+        sync_type: syncType,
+        status,
+        details,
+      });
+    } catch (error) {
+      console.error("Error logging sync:", error);
+    }
+  };
 
   // Fetch sync logs using the new API
-  const { 
-    data: syncLogs = [], 
-    isLoading: logsLoading, 
+  const {
+    data: syncLogs = [],
+    isLoading: logsLoading,
     error: logsError,
-    refetch: refetchLogs 
-  } = useQuery({
-    queryKey: ['sync-logs', currentBlogId],
+    refetch: refetchLogs,
+  } = useQuery<Tables<"sync_logs">[]>({
+    queryKey: ["sync-logs", currentBlogId],
     queryFn: async () => {
-      if (!currentBlogId) return []
-      
-      const response = await fetch(`/api/sync/logs?blog_id=${currentBlogId}`)
+      if (!currentBlogId) return [];
+
+      const response = await fetch(`/api/sync/logs?blog_id=${currentBlogId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch sync logs')
+        throw new Error("Failed to fetch sync logs");
       }
-      return response.json()
+      return response.json();
     },
     enabled: !!currentBlogId,
     refetchInterval: 30000, // Refresh every 30 seconds
-  })
+  });
 
   // Enhanced sync mutations using the new API
   const syncFromWordPressMutation = useMutation({
     mutationFn: async (options?: { postId?: string }) => {
-      if (!currentBlogId) throw new Error('No blog selected')
+      if (!currentBlogId) throw new Error("No blog selected");
 
-      const response = await fetch('/api/sync/wordpress-to-supabase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/sync/wordpress-to-supabase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           blogId: currentBlogId,
-          direction: 'wp_to_supabase',
-          postId: options?.postId
-        })
-      })
+          direction: "wp_to_supabase",
+          postId: options?.postId,
+        }),
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Sync failed')
+        const error = await response.json();
+        throw new Error(error.error || "Sync failed");
       }
 
-      return response.json()
+      return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['sync-logs'] })
-      queryClient.invalidateQueries({ queryKey: ['blog-posts'] })
-      queryClient.invalidateQueries({ queryKey: ['blog-stats'] })
-      
+      queryClient.invalidateQueries({ queryKey: ["sync-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["blog-stats"] });
+
       addNotification({
-        type: 'success',
-        title: 'WordPress Import',
+        type: "success",
+        title: "WordPress Import",
         message: data.message,
-      })
+      });
     },
     onError: (error) => {
       addNotification({
-        type: 'error',
-        title: 'Import Failed',
+        type: "error",
+        title: "Import Failed",
         message: error.message,
-      })
-    }
-  })
+      });
+    },
+  });
 
   const syncToWordPressMutation = useMutation({
     mutationFn: async (options?: { postId?: string }) => {
-      if (!currentBlogId) throw new Error('No blog selected')
+      if (!currentBlogId) throw new Error("No blog selected");
 
-      const response = await fetch('/api/sync/wordpress-to-supabase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/sync/wordpress-to-supabase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           blogId: currentBlogId,
-          direction: 'supabase_to_wp',
-          postId: options?.postId
-        })
-      })
+          direction: "supabase_to_wp",
+          postId: options?.postId,
+        }),
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Sync failed')
+        const error = await response.json();
+        throw new Error(error.error || "Sync failed");
       }
 
-      return response.json()
+      return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['sync-logs'] })
-      queryClient.invalidateQueries({ queryKey: ['blog-posts'] })
-      queryClient.invalidateQueries({ queryKey: ['blog-stats'] })
-      
+      queryClient.invalidateQueries({ queryKey: ["sync-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["blog-stats"] });
+
       addNotification({
-        type: 'success',
-        title: 'WordPress Export',
+        type: "success",
+        title: "WordPress Export",
         message: data.message,
-      })
+      });
     },
     onError: (error) => {
       addNotification({
-        type: 'error',
-        title: 'Export Failed',
+        type: "error",
+        title: "Export Failed",
         message: error.message,
-      })
-    }
-  })
+      });
+    },
+  });
 
   // Enhanced sync functions
-  const syncFromWordPress = useCallback(async (postId?: string) => {
-    return syncFromWordPressMutation.mutateAsync({ postId })
-  }, [syncFromWordPressMutation])
+  const syncFromWordPress = useCallback(
+    async (postId?: string) => {
+      return syncFromWordPressMutation.mutateAsync({ postId });
+    },
+    [syncFromWordPressMutation]
+  );
 
-  const syncToWordPress = useCallback(async (postId?: string) => {
-    return syncToWordPressMutation.mutateAsync({ postId })
-  }, [syncToWordPressMutation])
+  const syncToWordPress = useCallback(
+    async (postId?: string) => {
+      return syncToWordPressMutation.mutateAsync({ postId });
+    },
+    [syncToWordPressMutation]
+  );
 
   // Get sync status
   const getSyncStatus = useCallback(() => {
-    if (!syncLogs || syncLogs.length === 0) return null
+    if (!syncLogs || syncLogs.length === 0) return null;
 
-    const lastSync = syncLogs[0]
+    const lastSync = syncLogs[0];
     return {
       lastSyncAt: lastSync.created_at,
       lastSyncStatus: lastSync.status,
       lastSyncType: lastSync.sync_type,
-      isHealthy: lastSync.status === 'completed'
-    }
-  }, [syncLogs])
+      isHealthy: lastSync.status === "completed",
+    };
+  }, [syncLogs]);
 
   // Get sync statistics
   const getSyncStats = useCallback(() => {
@@ -172,21 +226,33 @@ export function useWordPressSync(blogId?: string) {
         failedSyncs: 0,
         totalPostsSynced: 0,
         totalMediaSynced: 0,
-        successRate: 0
-      }
+        successRate: 0,
+      };
     }
 
-    const totalSyncs = syncLogs.length
-    const successfulSyncs = syncLogs.filter(log => log.status === 'completed').length
-    const failedSyncs = syncLogs.filter(log => log.status === 'failed').length
+    const totalSyncs = syncLogs.length;
+    const successfulSyncs = syncLogs.filter(
+      (log: Tables<"sync_logs">) => log.status === "completed"
+    ).length;
+    const failedSyncs = syncLogs.filter(
+      (log: Tables<"sync_logs">) => log.status === "failed"
+    ).length;
 
-    const totalPostsSynced = syncLogs.reduce((sum, log) => {
-      return sum + (log.details?.posts_synced || 0)
-    }, 0)
+    const totalPostsSynced = syncLogs.reduce(
+      (sum: number, log: Tables<"sync_logs">) => {
+        const details = log.details as { posts_synced?: number } | null;
+        return sum + (details?.posts_synced || 0);
+      },
+      0
+    );
 
-    const totalMediaSynced = syncLogs.reduce((sum, log) => {
-      return sum + (log.details?.media_synced || 0)
-    }, 0)
+    const totalMediaSynced = syncLogs.reduce(
+      (sum: number, log: Tables<"sync_logs">) => {
+        const details = log.details as { media_synced?: number } | null;
+        return sum + (details?.media_synced || 0);
+      },
+      0
+    );
 
     return {
       totalSyncs,
@@ -194,438 +260,371 @@ export function useWordPressSync(blogId?: string) {
       failedSyncs,
       totalPostsSynced,
       totalMediaSynced,
-      successRate: totalSyncs > 0 ? (successfulSyncs / totalSyncs) * 100 : 0
-    }
-  }, [syncLogs])
+      successRate: totalSyncs > 0 ? (successfulSyncs / totalSyncs) * 100 : 0,
+    };
+  }, [syncLogs]);
 
   // Testar conexão WordPress
   const testConnection = useMutation({
     mutationFn: async () => {
       try {
-        const client = await getWordPressClient(blogId)
-        await client.getPosts({ per_page: 1 })
-        return { success: true, message: 'Conexão estabelecida com sucesso' }
+        const blogId = currentBlogId;
+        if (!blogId) throw new Error("No blog selected");
+
+        const client = await getWordPressClient(blogId);
+        await client.getPosts({ per_page: 1 });
+        return { success: true, message: "Conexão estabelecida com sucesso" };
       } catch (error) {
-        throw new Error(`Erro na conexão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+        throw new Error(
+          `Erro na conexão: ${error instanceof Error ? error.message : "Erro desconhecido"}`
+        );
       }
     },
     onSuccess: () => {
       addNotification({
-        type: 'success',
-        title: 'Conexão WordPress',
-        message: 'Conexão testada com sucesso',
-      })
+        type: "success",
+        title: "Conexão WordPress",
+        message: "Conexão testada com sucesso",
+      });
     },
     onError: (error) => {
       addNotification({
-        type: 'error',
-        title: 'Erro na conexão',
+        type: "error",
+        title: "Erro na conexão",
         message: error.message,
-      })
+      });
     },
-  })
+  });
 
   // Sincronizar post específico para WordPress
-  const syncPostToWordPress = useMutation({
-    mutationFn: async (postId: string) => {
+  const syncPostToWordPress = useCallback(
+    async (postId: string) => {
       try {
-        // Buscar post do Supabase
-        const { data: post, error } = await supabase
-          .from('content_posts')
-          .select('*')
-          .eq('id', postId)
-          .single()
+        setSyncingPosts((prev) => new Set([...prev, postId]));
 
-        if (error) {
-          throw new Error(`Erro ao buscar post: ${error.message}`)
+        // Verificar se há um blog selecionado
+        const blogId = currentBlogId;
+        if (!blogId) throw new Error("No blog selected");
+
+        const { data: post, error: postError } = await supabase
+          .from("content_posts")
+          .select("*")
+          .eq("id", postId)
+          .eq("blog_id", blogId)
+          .single();
+
+        if (postError || !post) {
+          throw new Error("Post not found");
         }
 
-        const client = await getWordPressClient(blogId)
+        const { data: blog, error: blogError } = await supabase
+          .from("blogs")
+          .select("*")
+          .eq("id", blogId)
+          .single();
 
-        if (post.wordpress_id) {
-          // Atualizar post existente
-          const wpPost = await client.updatePost(parseInt(post.wordpress_id), {
-            title: post.title,
-            content: post.content,
-            excerpt: post.excerpt,
-            status: post.status,
-            categories: [], // TODO: Mapear categorias
-            tags: [], // TODO: Mapear tags
-            meta: {
-              seo_title: post.seo_title,
-              seo_description: post.seo_description,
-              focus_keyword: post.seo_keywords?.[0],
-            },
-          })
-
-          return { success: true, message: 'Post atualizado no WordPress', wpPost }
-        } else {
-          // Criar novo post
-          const wpPost = await client.createPost({
-            title: post.title,
-            content: post.content,
-            excerpt: post.excerpt,
-            status: post.status,
-            categories: [],
-            tags: [],
-            meta: {
-              seo_title: post.seo_title,
-              seo_description: post.seo_description,
-              focus_keyword: post.seo_keywords?.[0],
-            },
-          })
-
-          // Atualizar post no Supabase com WordPress ID
-          const { error: updateError } = await supabase
-            .from('content_posts')
-            .update({ wordpress_id: wpPost.id.toString() })
-            .eq('id', postId)
-
-          if (updateError) {
-            console.error('Erro ao atualizar WordPress ID:', updateError)
-          }
-
-          return { success: true, message: 'Post criado no WordPress', wpPost }
+        if (blogError || !blog) {
+          throw new Error("Blog not found");
         }
+
+        // Preparar dados para o WordPress
+        const wpPostData: WordPressCreatePostRequest = {
+          title: post.title,
+          content: post.content,
+          excerpt: post.excerpt || undefined,
+          status: post.status as
+            | "publish"
+            | "future"
+            | "draft"
+            | "pending"
+            | "private",
+          meta: {
+            title: post.meta_title || "",
+            description: post.meta_description || "",
+          },
+        };
+
+        // Criar post no WordPress
+        const wpResponse = await createWordPressPost(blog, wpPostData);
+
+        // Atualizar post no Supabase com dados do WordPress
+        const updateData = {
+          wordpress_post_id: wpResponse.id,
+          wordpress_link: wpResponse.link || null,
+          wordpress_slug: wpResponse.slug || null,
+        } as const;
+
+        const { error: updateError } = await supabase
+          .from("content_posts")
+          .update(updateData)
+          .eq("id", postId)
+          .eq("blog_id", blogId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        // Log da sincronização
+        await logSync(blogId, "supabase_to_wp", "completed", {
+          posts_synced: 1,
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["posts", blogId] });
       } catch (error) {
-        throw new Error(`Erro na sincronização: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+        console.error("Error syncing post to WordPress:", error);
+
+        const blogId = currentBlogId;
+        if (blogId) {
+          await logSync(blogId, "supabase_to_wp", "failed", {
+            errors: [error instanceof Error ? error.message : "Unknown error"],
+          });
+        }
+
+        throw error;
+      } finally {
+        setSyncingPosts((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(postId);
+          return newSet;
+        });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] })
-      addNotification({
-        type: 'success',
-        title: 'Sincronização completa',
-        message: 'Post sincronizado com WordPress',
-      })
-    },
-    onError: (error) => {
-      addNotification({
-        type: 'error',
-        title: 'Erro na sincronização',
-        message: error.message,
-      })
-    },
-  })
+    [currentBlogId, queryClient]
+  );
 
   // Sincronizar post específico do WordPress para Supabase
   const syncPostFromWordPress = useMutation({
     mutationFn: async (wordpressId: number) => {
       try {
-        const client = await getWordPressClient(blogId)
-        const wpPost = await client.getPost(wordpressId)
+        const blogId = currentBlogId;
+        if (!blogId) throw new Error("No blog selected");
+
+        const client = await getWordPressClient(blogId);
+        const wpPost = await client.getPost(wordpressId);
 
         // Verificar se post já existe
         const { data: existingPost } = await supabase
-          .from('content_posts')
-          .select('id')
-          .eq('wordpress_id', wordpressId.toString())
-          .eq('blog_id', blogId)
-          .single()
+          .from("content_posts")
+          .select("id")
+          .eq("wordpress_post_id", wordpressId)
+          .eq("blog_id", blogId)
+          .single();
 
         const postData = {
           blog_id: blogId,
-          title: wpPost.title,
-          content: wpPost.content,
-          excerpt: wpPost.excerpt,
+          title:
+            typeof wpPost.title === "string"
+              ? wpPost.title
+              : wpPost.title.rendered,
+          content:
+            typeof wpPost.content === "string"
+              ? wpPost.content
+              : wpPost.content.rendered,
+          excerpt: wpPost.excerpt
+            ? typeof wpPost.excerpt === "string"
+              ? wpPost.excerpt
+              : wpPost.excerpt.rendered
+            : null,
           status: wpPost.status,
-          wordpress_id: wpPost.id.toString(),
-          wordpress_sync: true,
-          seo_title: wpPost.meta?.seo_title,
-          seo_description: wpPost.meta?.seo_description,
-          seo_keywords: wpPost.meta?.focus_keyword ? [wpPost.meta.focus_keyword] : [],
-          categories: [],
-          tags: [],
-          publish_date: wpPost.date,
-        }
+          wordpress_post_id: wpPost.id,
+          wordpress_link: wpPost.link || null,
+          wordpress_slug: wpPost.slug || null,
+          meta_title: (wpPost.meta as any)?.seo_title,
+          meta_description: (wpPost.meta as any)?.seo_description,
+          published_at: (wpPost as any).date,
+        };
 
         if (existingPost) {
           // Atualizar post existente
           const { data, error } = await supabase
-            .from('content_posts')
+            .from("content_posts")
             .update(postData)
-            .eq('id', existingPost.id)
+            .eq("id", existingPost.id)
             .select()
-            .single()
+            .single();
 
           if (error) {
-            throw new Error(`Erro ao atualizar post: ${error.message}`)
+            throw new Error(`Erro ao atualizar post: ${error.message}`);
           }
 
-          return { success: true, message: 'Post atualizado do WordPress', post: data }
+          return {
+            success: true,
+            message: "Post atualizado do WordPress",
+            post: data,
+          };
         } else {
           // Criar novo post
           const { data, error } = await supabase
-            .from('content_posts')
-            .insert([postData])
+            .from("content_posts")
+            .insert(postData)
             .select()
-            .single()
+            .single();
 
           if (error) {
-            throw new Error(`Erro ao criar post: ${error.message}`)
+            throw new Error(`Erro ao criar post: ${error.message}`);
           }
 
-          return { success: true, message: 'Post importado do WordPress', post: data }
+          return {
+            success: true,
+            message: "Post importado do WordPress",
+            post: data,
+          };
         }
       } catch (error) {
-        throw new Error(`Erro na importação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+        throw new Error(
+          `Erro na sincronização: ${error instanceof Error ? error.message : "Erro desconhecido"}`
+        );
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
       addNotification({
-        type: 'success',
-        title: 'Importação completa',
-        message: 'Post importado do WordPress',
-      })
+        type: "success",
+        title: "Sincronização completa",
+        message: "Post sincronizado do WordPress",
+      });
     },
     onError: (error) => {
       addNotification({
-        type: 'error',
-        title: 'Erro na importação',
+        type: "error",
+        title: "Erro na sincronização",
         message: error.message,
-      })
+      });
     },
-  })
+  });
 
-  // Sincronização em lote - Supabase para WordPress
-  const syncAllToWordPress = useMutation({
-    mutationFn: async () => {
+  // Sincronização em lote
+  const bulkSync = useMutation({
+    mutationFn: async ({
+      direction,
+      postIds,
+    }: {
+      direction: "to_wp" | "from_wp";
+      postIds?: string[];
+    }) => {
       setSyncStatus({
         isRunning: true,
         progress: 0,
-        currentTask: 'Iniciando sincronização...',
-      })
+        currentTask: "Iniciando sincronização...",
+      });
 
-      try {
-        // Buscar posts para sincronizar
-        const { data: posts, error } = await supabase
-          .from('content_posts')
-          .select('id, title, wordpress_sync')
-          .eq('blog_id', blogId)
-          .eq('wordpress_sync', true)
+      let synced = 0;
+      let errors = 0;
+      const errorDetails: string[] = [];
+      const totalPosts = postIds?.length || 0;
 
-        if (error) {
-          throw new Error(`Erro ao buscar posts: ${error.message}`)
-        }
-
-        if (!posts || posts.length === 0) {
-          return { success: true, message: 'Nenhum post para sincronizar', details: { synced: 0, errors: 0 } }
-        }
-
-        const total = posts.length
-        let synced = 0
-        let errors = 0
-        const errorDetails: string[] = []
-
-        for (let i = 0; i < posts.length; i++) {
-          const post = posts[i]
-          setSyncStatus(prev => ({
-            ...prev,
-            progress: Math.round((i / total) * 100),
-            currentTask: `Sincronizando: ${post.title}`,
-          }))
-
+      if (direction === "to_wp" && postIds) {
+        for (const postId of postIds) {
           try {
-            await syncPostToWordPress.mutateAsync(post.id)
-            synced++
+            setSyncStatus((prev) => ({
+              ...prev,
+              progress: (synced / totalPosts) * 100,
+              currentTask: `Sincronizando post ${synced + 1} de ${totalPosts}...`,
+            }));
+
+            await syncPostToWordPress(postId);
+            synced++;
           } catch (error) {
-            errors++
-            errorDetails.push(`${post.title}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+            errors++;
+            errorDetails.push(
+              error instanceof Error ? error.message : "Erro desconhecido"
+            );
           }
         }
-
-        const result = {
-          success: errors === 0,
-          message: errors === 0 
-            ? `${synced} posts sincronizados com sucesso` 
-            : `${synced} posts sincronizados, ${errors} com erro`,
-          details: { synced, errors, errorDetails }
-        }
-
-        setSyncStatus({
-          isRunning: false,
-          progress: 100,
-          currentTask: 'Concluído',
-          results: result,
-        })
-
-        return result
-      } catch (error) {
-        setSyncStatus({
-          isRunning: false,
-          progress: 0,
-          currentTask: 'Erro',
-          results: {
-            success: false,
-            message: error instanceof Error ? error.message : 'Erro desconhecido',
-          },
-        })
-        throw error
       }
-    },
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] })
-      addNotification({
-        type: result.success ? 'success' : 'warning',
-        title: 'Sincronização em lote',
-        message: result.message,
-      })
-    },
-  })
 
-  // Sincronização em lote - WordPress para Supabase
-  const syncAllFromWordPress = useMutation({
-    mutationFn: async () => {
+      const result: SyncResult = {
+        success: errors === 0,
+        message: `Sincronização concluída: ${synced} posts sincronizados, ${errors} erros`,
+        details: {
+          synced,
+          errors,
+          errorDetails: errorDetails.length > 0 ? errorDetails : undefined,
+        },
+      };
+
       setSyncStatus({
-        isRunning: true,
-        progress: 0,
-        currentTask: 'Buscando posts do WordPress...',
-      })
+        isRunning: false,
+        progress: 100,
+        currentTask: "Concluído",
+        results: result,
+      });
 
-      try {
-        const client = await getWordPressClient(blogId)
-        const wpPosts = await client.getPosts({ per_page: 100 })
-
-        if (!wpPosts || wpPosts.length === 0) {
-          return { success: true, message: 'Nenhum post encontrado no WordPress', details: { synced: 0, errors: 0 } }
-        }
-
-        const total = wpPosts.length
-        let synced = 0
-        let errors = 0
-        const errorDetails: string[] = []
-
-        for (let i = 0; i < wpPosts.length; i++) {
-          const wpPost = wpPosts[i]
-          setSyncStatus(prev => ({
-            ...prev,
-            progress: Math.round((i / total) * 100),
-            currentTask: `Importando: ${wpPost.title}`,
-          }))
-
-          try {
-            await syncPostFromWordPress.mutateAsync(wpPost.id)
-            synced++
-          } catch (error) {
-            errors++
-            errorDetails.push(`${wpPost.title}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
-          }
-        }
-
-        const result = {
-          success: errors === 0,
-          message: errors === 0 
-            ? `${synced} posts importados com sucesso` 
-            : `${synced} posts importados, ${errors} com erro`,
-          details: { synced, errors, errorDetails }
-        }
-
-        setSyncStatus({
-          isRunning: false,
-          progress: 100,
-          currentTask: 'Concluído',
-          results: result,
-        })
-
-        return result
-      } catch (error) {
-        setSyncStatus({
-          isRunning: false,
-          progress: 0,
-          currentTask: 'Erro',
-          results: {
-            success: false,
-            message: error instanceof Error ? error.message : 'Erro desconhecido',
-          },
-        })
-        throw error
-      }
+      return result;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] })
       addNotification({
-        type: result.success ? 'success' : 'warning',
-        title: 'Importação em lote',
+        type: result.success ? "success" : "warning",
+        title: "Sincronização em lote",
         message: result.message,
-      })
+      });
     },
-  })
+    onError: (error) => {
+      setSyncStatus((prev) => ({
+        ...prev,
+        isRunning: false,
+      }));
 
-  // Obter configurações de sincronização
-  const { data: syncSettings } = useQuery({
-    queryKey: ['sync-settings', blogId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('blogs')
-        .select('wordpress_app_password, auto_sync_enabled')
-        .eq('id', blogId)
-        .single()
-
-      if (error) {
-        throw new Error(`Erro ao buscar configurações: ${error.message}`)
-      }
-
-      return data
+      addNotification({
+        type: "error",
+        title: "Erro na sincronização",
+        message: error.message,
+      });
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  })
+  });
 
   return {
-    // Enhanced sync functionality
+    // States
+    syncStatus,
     syncLogs,
     logsLoading,
     logsError,
-    refetchLogs,
+    syncingPosts,
+
+    // Sync functions
     syncFromWordPress,
     syncToWordPress,
+    syncPostToWordPress,
+    syncPostFromWordPress: syncPostFromWordPress.mutateAsync,
+    bulkSync: bulkSync.mutateAsync,
+
+    // Utilities
     getSyncStatus,
     getSyncStats,
-    
-    // Legacy functionality (maintained for compatibility)
-    syncStatus,
-    setSyncStatus,
-    syncSettings,
-    testConnection,
-    syncPostToWordPress,
-    syncPostFromWordPress,
-    syncAllToWordPress,
-    syncAllFromWordPress,
-    
+    testConnection: testConnection.mutateAsync,
+    refetchLogs,
+
     // Loading states
+    isSyncingFromWP: syncFromWordPressMutation.isPending,
+    isSyncingToWP: syncToWordPressMutation.isPending,
     isTestingConnection: testConnection.isPending,
-    isSyncingPost: syncPostToWordPress.isPending || syncPostFromWordPress.isPending,
-    isSyncingAll: syncAllToWordPress.isPending || syncAllFromWordPress.isPending,
-    isSyncRunning: syncFromWordPressMutation.isPending || syncToWordPressMutation.isPending,
-    
-    // Error states
-    syncError: syncFromWordPressMutation.error || syncToWordPressMutation.error,
-  }
+    isBulkSyncing: bulkSync.isPending,
+  };
 }
 
 export function useWordPressConnection(blogId: string) {
   const { data: connectionStatus, refetch } = useQuery({
-    queryKey: ['wordpress-connection', blogId],
+    queryKey: ["wordpress-connection", blogId],
     queryFn: async () => {
       try {
-        const client = await getWordPressClient(blogId)
-        await client.getPosts({ per_page: 1 })
-        return { connected: true, error: null }
+        const client = await getWordPressClient(blogId);
+        await client.getPosts({ per_page: 1 });
+        return { connected: true, error: null };
       } catch (error) {
-        return { 
-          connected: false, 
-          error: error instanceof Error ? error.message : 'Erro desconhecido' 
-        }
+        return {
+          connected: false,
+          error: error instanceof Error ? error.message : "Erro desconhecido",
+        };
       }
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
-  })
+  });
 
   return {
     connectionStatus,
     refetchConnection: refetch,
     isConnected: connectionStatus?.connected ?? false,
     connectionError: connectionStatus?.error,
-  }
+  };
 }

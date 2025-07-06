@@ -1,58 +1,61 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Settings, 
-  User, 
-  Bell, 
-  Shield, 
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Settings,
+  User,
+  Bell,
+  Shield,
   Database,
   Key,
   Zap,
   Save,
   AlertCircle,
   CheckCircle,
-  Globe,
-} from 'lucide-react'
+} from "lucide-react";
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
     syncAlerts: true,
-    weeklyReports: true
-  })
+    weeklyReports: true,
+  });
 
   const [apiKeys, setApiKeys] = useState({
-    openai: '••••••••••••••••',
-    wordpress_einsof7: '••••••••••••••••',
-    wordpress_opetmil: '••••••••••••••••',
-    n8n: '••••••••••••••••'
-  })
+    openai: "••••••••••••••••",
+    n8n: "••••••••••••••••",
+  });
 
   const [profile, setProfile] = useState({
-    name: 'Usuario',
-    email: 'usuario@example.com',
-    timezone: 'America/Sao_Paulo',
-    language: 'pt-BR'
-  })
+    name: "Usuario",
+    email: "usuario@example.com",
+    timezone: "America/Sao_Paulo",
+    language: "pt-BR",
+  });
 
-  const [isDirty, setIsDirty] = useState(false)
+  const [isDirty, setIsDirty] = useState(false);
 
   const handleSave = () => {
     // TODO: Implement save functionality
-    console.log('Saving settings...')
-    setIsDirty(false)
-  }
+    console.log("Saving settings...");
+    setIsDirty(false);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -87,7 +90,10 @@ export default function SettingsPage() {
             <User className="h-4 w-4" />
             Perfil
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
+          <TabsTrigger
+            value="notifications"
+            className="flex items-center gap-2"
+          >
             <Bell className="h-4 w-4" />
             Notificações
           </TabsTrigger>
@@ -122,8 +128,8 @@ export default function SettingsPage() {
                     id="name"
                     value={profile.name}
                     onChange={(e) => {
-                      setProfile(prev => ({ ...prev, name: e.target.value }))
-                      setIsDirty(true)
+                      setProfile((prev) => ({ ...prev, name: e.target.value }));
+                      setIsDirty(true);
                     }}
                   />
                 </div>
@@ -134,8 +140,11 @@ export default function SettingsPage() {
                     type="email"
                     value={profile.email}
                     onChange={(e) => {
-                      setProfile(prev => ({ ...prev, email: e.target.value }))
-                      setIsDirty(true)
+                      setProfile((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }));
+                      setIsDirty(true);
                     }}
                   />
                 </div>
@@ -145,8 +154,11 @@ export default function SettingsPage() {
                     id="timezone"
                     value={profile.timezone}
                     onChange={(e) => {
-                      setProfile(prev => ({ ...prev, timezone: e.target.value }))
-                      setIsDirty(true)
+                      setProfile((prev) => ({
+                        ...prev,
+                        timezone: e.target.value,
+                      }));
+                      setIsDirty(true);
                     }}
                   />
                 </div>
@@ -156,8 +168,11 @@ export default function SettingsPage() {
                     id="language"
                     value={profile.language}
                     onChange={(e) => {
-                      setProfile(prev => ({ ...prev, language: e.target.value }))
-                      setIsDirty(true)
+                      setProfile((prev) => ({
+                        ...prev,
+                        language: e.target.value,
+                      }));
+                      setIsDirty(true);
                     }}
                   />
                 </div>
@@ -187,8 +202,8 @@ export default function SettingsPage() {
                   <Switch
                     checked={notifications.email}
                     onCheckedChange={(checked) => {
-                      setNotifications(prev => ({ ...prev, email: checked }))
-                      setIsDirty(true)
+                      setNotifications((prev) => ({ ...prev, email: checked }));
+                      setIsDirty(true);
                     }}
                   />
                 </div>
@@ -205,8 +220,8 @@ export default function SettingsPage() {
                   <Switch
                     checked={notifications.push}
                     onCheckedChange={(checked) => {
-                      setNotifications(prev => ({ ...prev, push: checked }))
-                      setIsDirty(true)
+                      setNotifications((prev) => ({ ...prev, push: checked }));
+                      setIsDirty(true);
                     }}
                   />
                 </div>
@@ -215,7 +230,9 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label className="text-base">Alertas de Sincronização</Label>
+                    <Label className="text-base">
+                      Alertas de Sincronização
+                    </Label>
                     <p className="text-sm text-gray-600">
                       Seja notificado sobre problemas de sincronização
                     </p>
@@ -223,8 +240,11 @@ export default function SettingsPage() {
                   <Switch
                     checked={notifications.syncAlerts}
                     onCheckedChange={(checked) => {
-                      setNotifications(prev => ({ ...prev, syncAlerts: checked }))
-                      setIsDirty(true)
+                      setNotifications((prev) => ({
+                        ...prev,
+                        syncAlerts: checked,
+                      }));
+                      setIsDirty(true);
                     }}
                   />
                 </div>
@@ -241,8 +261,11 @@ export default function SettingsPage() {
                   <Switch
                     checked={notifications.weeklyReports}
                     onCheckedChange={(checked) => {
-                      setNotifications(prev => ({ ...prev, weeklyReports: checked }))
-                      setIsDirty(true)
+                      setNotifications((prev) => ({
+                        ...prev,
+                        weeklyReports: checked,
+                      }));
+                      setIsDirty(true);
                     }}
                   />
                 </div>
@@ -264,7 +287,10 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="openai-key" className="flex items-center gap-2">
+                    <Label
+                      htmlFor="openai-key"
+                      className="flex items-center gap-2"
+                    >
                       <Key className="h-4 w-4" />
                       OpenAI API Key
                     </Label>
@@ -273,47 +299,21 @@ export default function SettingsPage() {
                       type="password"
                       value={apiKeys.openai}
                       onChange={(e) => {
-                        setApiKeys(prev => ({ ...prev, openai: e.target.value }))
-                        setIsDirty(true)
+                        setApiKeys((prev) => ({
+                          ...prev,
+                          openai: e.target.value,
+                        }));
+                        setIsDirty(true);
                       }}
                       placeholder="sk-..."
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="wp-einsof7-key" className="flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      WordPress Einsof7 API Key
-                    </Label>
-                    <Input
-                      id="wp-einsof7-key"
-                      type="password"
-                      value={apiKeys.wordpress_einsof7}
-                      onChange={(e) => {
-                        setApiKeys(prev => ({ ...prev, wordpress_einsof7: e.target.value }))
-                        setIsDirty(true)
-                      }}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="wp-opetmil-key" className="flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      WordPress Opetmil API Key
-                    </Label>
-                    <Input
-                      id="wp-opetmil-key"
-                      type="password"
-                      value={apiKeys.wordpress_opetmil}
-                      onChange={(e) => {
-                        setApiKeys(prev => ({ ...prev, wordpress_opetmil: e.target.value }))
-                        setIsDirty(true)
-                      }}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="n8n-key" className="flex items-center gap-2">
+                    <Label
+                      htmlFor="n8n-key"
+                      className="flex items-center gap-2"
+                    >
                       <Zap className="h-4 w-4" />
                       n8n API Key
                     </Label>
@@ -322,8 +322,11 @@ export default function SettingsPage() {
                       type="password"
                       value={apiKeys.n8n}
                       onChange={(e) => {
-                        setApiKeys(prev => ({ ...prev, n8n: e.target.value }))
-                        setIsDirty(true)
+                        setApiKeys((prev) => ({
+                          ...prev,
+                          n8n: e.target.value,
+                        }));
+                        setIsDirty(true);
                       }}
                     />
                   </div>
@@ -357,7 +360,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 text-yellow-500" />
-                      WordPress (Opetmil)
+                      WordPress (Optemil)
                     </span>
                     <Badge variant="secondary">Verificando</Badge>
                   </div>
@@ -379,9 +382,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Configurações de Segurança</CardTitle>
-              <CardDescription>
-                Mantenha sua conta segura
-              </CardDescription>
+              <CardDescription>Mantenha sua conta segura</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -399,7 +400,9 @@ export default function SettingsPage() {
                 <Separator />
 
                 <div>
-                  <Label className="text-base">Autenticação de Dois Fatores</Label>
+                  <Label className="text-base">
+                    Autenticação de Dois Fatores
+                  </Label>
                   <p className="text-sm text-gray-600 mb-3">
                     Adicione uma camada extra de segurança à sua conta
                   </p>
@@ -416,9 +419,7 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-600 mb-3">
                     Gerencie dispositivos com acesso à sua conta
                   </p>
-                  <Button variant="outline">
-                    Ver Sessões Ativas
-                  </Button>
+                  <Button variant="outline">Ver Sessões Ativas</Button>
                 </div>
               </div>
             </CardContent>
@@ -474,5 +475,5 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

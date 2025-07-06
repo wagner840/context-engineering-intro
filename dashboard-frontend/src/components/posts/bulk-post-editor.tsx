@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { useState, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Progress } from '@/components/ui/progress'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Separator } from '@/components/ui/separator'
-import { 
-  Edit, 
-  Save, 
+import { useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import {
+  Edit,
+  Save,
   Trash2,
   Upload,
   FileText,
@@ -22,270 +22,282 @@ import {
   AlertCircle,
   Loader2,
   Target,
-  Zap
-} from 'lucide-react'
+  Zap,
+} from "lucide-react";
 
 interface Post {
-  id: string
-  title: string
-  slug: string
-  content: string
-  excerpt: string
-  status: 'draft' | 'published' | 'scheduled' | 'trash'
-  categories: string[]
-  tags: string[]
-  metaTitle: string
-  metaDescription: string
-  featuredImage?: string
-  publishDate?: string
-  blog: string
-  seoScore: number
-  wordCount: number
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  status: "draft" | "published" | "scheduled" | "trash";
+  categories: string[];
+  tags: string[];
+  metaTitle: string;
+  metaDescription: string;
+  featuredImage?: string;
+  publishDate?: string;
+  blog: string;
+  seoScore: number;
+  wordCount: number;
 }
 
 interface BulkOperation {
-  type: 'update' | 'delete' | 'publish' | 'draft'
-  field?: keyof Post
-  value?: any
-  postIds: string[]
+  type: "update" | "delete" | "publish" | "draft";
+  field?: keyof Post;
+  value?: any;
+  postIds: string[];
 }
 
 interface BulkPostEditorProps {
-  posts: Post[]
-  onSave?: (operations: BulkOperation[]) => Promise<void>
-  onClose?: () => void
+  posts: Post[];
+  onSave?: (operations: BulkOperation[]) => Promise<void>;
+  onClose?: () => void;
 }
 
-export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) {
-  const [selectedPosts, setSelectedPosts] = useState<string[]>([])
+export function BulkPostEditor({
+  posts,
+  onSave,
+  onClose,
+}: BulkPostEditorProps) {
+  const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
   const [bulkEdits, setBulkEdits] = useState({
-    status: '',
+    status: "",
     categories: [] as string[],
     tags: [] as string[],
-    metaTitle: '',
-    metaDescription: '',
-    blog: '',
-    publishDate: ''
-  })
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [results, setResults] = useState<{ success: number; failed: number; total: number } | null>(null)
+    metaTitle: "",
+    metaDescription: "",
+    blog: "",
+    publishDate: "",
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<{
+    success: number;
+    failed: number;
+    total: number;
+  } | null>(null);
 
-  const selectedPostsData = posts.filter(post => selectedPosts.includes(post.id))
+  const selectedPostsData = posts.filter((post) =>
+    selectedPosts.includes(post.id)
+  );
 
   const handleSelectAll = useCallback(() => {
     if (selectedPosts.length === posts.length) {
-      setSelectedPosts([])
+      setSelectedPosts([]);
     } else {
-      setSelectedPosts(posts.map(post => post.id))
+      setSelectedPosts(posts.map((post) => post.id));
     }
-  }, [posts, selectedPosts.length])
+  }, [posts, selectedPosts.length]);
 
   const handleSelectPost = useCallback((postId: string) => {
-    setSelectedPosts(prev => 
-      prev.includes(postId) 
-        ? prev.filter(id => id !== postId)
+    setSelectedPosts((prev) =>
+      prev.includes(postId)
+        ? prev.filter((id) => id !== postId)
         : [...prev, postId]
-    )
-  }, [])
+    );
+  }, []);
 
   const handleBulkUpdate = async () => {
-    if (selectedPosts.length === 0) return
+    if (selectedPosts.length === 0) return;
 
-    setIsProcessing(true)
-    setProgress(0)
-    setResults(null)
+    setIsProcessing(true);
+    setProgress(0);
+    setResults(null);
 
     try {
-      const operations: BulkOperation[] = []
+      const operations: BulkOperation[] = [];
 
       // Build operations based on bulk edits
       if (bulkEdits.status) {
         operations.push({
-          type: bulkEdits.status === 'published' ? 'publish' : 'update',
-          field: 'status',
+          type: bulkEdits.status === "published" ? "publish" : "update",
+          field: "status",
           value: bulkEdits.status,
-          postIds: selectedPosts
-        })
+          postIds: selectedPosts,
+        });
       }
 
       if (bulkEdits.categories.length > 0) {
         operations.push({
-          type: 'update',
-          field: 'categories',
+          type: "update",
+          field: "categories",
           value: bulkEdits.categories,
-          postIds: selectedPosts
-        })
+          postIds: selectedPosts,
+        });
       }
 
       if (bulkEdits.tags.length > 0) {
         operations.push({
-          type: 'update',
-          field: 'tags',
+          type: "update",
+          field: "tags",
           value: bulkEdits.tags,
-          postIds: selectedPosts
-        })
+          postIds: selectedPosts,
+        });
       }
 
       if (bulkEdits.metaTitle) {
         operations.push({
-          type: 'update',
-          field: 'metaTitle',
+          type: "update",
+          field: "metaTitle",
           value: bulkEdits.metaTitle,
-          postIds: selectedPosts
-        })
+          postIds: selectedPosts,
+        });
       }
 
       if (bulkEdits.metaDescription) {
         operations.push({
-          type: 'update',
-          field: 'metaDescription',
+          type: "update",
+          field: "metaDescription",
           value: bulkEdits.metaDescription,
-          postIds: selectedPosts
-        })
+          postIds: selectedPosts,
+        });
       }
 
       if (bulkEdits.blog) {
         operations.push({
-          type: 'update',
-          field: 'blog',
+          type: "update",
+          field: "blog",
           value: bulkEdits.blog,
-          postIds: selectedPosts
-        })
+          postIds: selectedPosts,
+        });
       }
 
       if (bulkEdits.publishDate) {
         operations.push({
-          type: 'update',
-          field: 'publishDate',
+          type: "update",
+          field: "publishDate",
           value: bulkEdits.publishDate,
-          postIds: selectedPosts
-        })
+          postIds: selectedPosts,
+        });
       }
 
       // Simulate progress
-      let currentProgress = 0
+      let currentProgress = 0;
       const progressInterval = setInterval(() => {
-        currentProgress += 10
-        setProgress(Math.min(currentProgress, 90))
-      }, 200)
+        currentProgress += 10;
+        setProgress(Math.min(currentProgress, 90));
+      }, 200);
 
       if (onSave) {
-        await onSave(operations)
+        await onSave(operations);
       }
 
-      clearInterval(progressInterval)
-      setProgress(100)
-      
+      clearInterval(progressInterval);
+      setProgress(100);
+
       setResults({
         success: selectedPosts.length,
         failed: 0,
-        total: selectedPosts.length
-      })
+        total: selectedPosts.length,
+      });
 
       // Reset form
       setBulkEdits({
-        status: '',
+        status: "",
         categories: [],
         tags: [],
-        metaTitle: '',
-        metaDescription: '',
-        blog: '',
-        publishDate: ''
-      })
-      setSelectedPosts([])
-
+        metaTitle: "",
+        metaDescription: "",
+        blog: "",
+        publishDate: "",
+      });
+      setSelectedPosts([]);
     } catch (error) {
-      console.error('Bulk update error:', error)
+      console.error("Bulk update error:", error);
       setResults({
         success: 0,
         failed: selectedPosts.length,
-        total: selectedPosts.length
-      })
+        total: selectedPosts.length,
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   const handleBulkDelete = async () => {
-    if (selectedPosts.length === 0) return
-    
-    if (!confirm(`Tem certeza que deseja deletar ${selectedPosts.length} posts? Esta ação não pode ser desfeita.`)) {
-      return
+    if (selectedPosts.length === 0) return;
+
+    if (
+      !confirm(
+        `Tem certeza que deseja deletar ${selectedPosts.length} posts? Esta ação não pode ser desfeita.`
+      )
+    ) {
+      return;
     }
 
-    setIsProcessing(true)
-    setProgress(0)
+    setIsProcessing(true);
+    setProgress(0);
 
     try {
       const operation: BulkOperation = {
-        type: 'delete',
-        postIds: selectedPosts
-      }
+        type: "delete",
+        postIds: selectedPosts,
+      };
 
       // Simulate progress
       const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 15, 90))
-      }, 200)
+        setProgress((prev) => Math.min(prev + 15, 90));
+      }, 200);
 
       if (onSave) {
-        await onSave([operation])
+        await onSave([operation]);
       }
 
-      clearInterval(progressInterval)
-      setProgress(100)
-      
+      clearInterval(progressInterval);
+      setProgress(100);
+
       setResults({
         success: selectedPosts.length,
         failed: 0,
-        total: selectedPosts.length
-      })
+        total: selectedPosts.length,
+      });
 
-      setSelectedPosts([])
-
+      setSelectedPosts([]);
     } catch (error) {
-      console.error('Bulk delete error:', error)
+      console.error("Bulk delete error:", error);
       setResults({
         success: 0,
         failed: selectedPosts.length,
-        total: selectedPosts.length
-      })
+        total: selectedPosts.length,
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   const addCategory = (category: string) => {
     if (category && !bulkEdits.categories.includes(category)) {
-      setBulkEdits(prev => ({
+      setBulkEdits((prev) => ({
         ...prev,
-        categories: [...prev.categories, category]
-      }))
+        categories: [...prev.categories, category],
+      }));
     }
-  }
+  };
 
   const removeCategory = (category: string) => {
-    setBulkEdits(prev => ({
+    setBulkEdits((prev) => ({
       ...prev,
-      categories: prev.categories.filter(c => c !== category)
-    }))
-  }
+      categories: prev.categories.filter((c) => c !== category),
+    }));
+  };
 
   const addTag = (tag: string) => {
     if (tag && !bulkEdits.tags.includes(tag)) {
-      setBulkEdits(prev => ({
+      setBulkEdits((prev) => ({
         ...prev,
-        tags: [...prev.tags, tag]
-      }))
+        tags: [...prev.tags, tag],
+      }));
     }
-  }
+  };
 
   const removeTag = (tag: string) => {
-    setBulkEdits(prev => ({
+    setBulkEdits((prev) => ({
       ...prev,
-      tags: prev.tags.filter(t => t !== tag)
-    }))
-  }
+      tags: prev.tags.filter((t) => t !== tag),
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -296,9 +308,7 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
             <Edit className="h-6 w-6" />
             Editor em Massa
           </h2>
-          <p className="text-gray-600">
-            Edite múltiplos posts simultaneamente
-          </p>
+          <p className="text-gray-600">Edite múltiplos posts simultaneamente</p>
         </div>
         {onClose && (
           <Button variant="outline" onClick={onClose}>
@@ -324,14 +334,21 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
 
       {/* Results */}
       {results && (
-        <Alert className={results.failed > 0 ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}>
+        <Alert
+          className={
+            results.failed > 0
+              ? "border-red-200 bg-red-50"
+              : "border-green-200 bg-green-50"
+          }
+        >
           {results.failed > 0 ? (
             <AlertCircle className="h-4 w-4 text-red-600" />
           ) : (
             <CheckCircle className="h-4 w-4 text-green-600" />
           )}
           <AlertDescription>
-            Processamento concluído: {results.success} sucessos, {results.failed} falhas de {results.total} posts
+            Processamento concluído: {results.success} sucessos,{" "}
+            {results.failed} falhas de {results.total} posts
           </AlertDescription>
         </Alert>
       )}
@@ -357,23 +374,37 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
             <CardContent>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {posts.map((post) => (
-                  <div key={post.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                  <div
+                    key={post.id}
+                    className="flex items-center gap-3 p-3 border rounded-lg"
+                  >
                     <Checkbox
                       checked={selectedPosts.includes(post.id)}
                       onCheckedChange={() => handleSelectPost(post.id)}
                     />
                     <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm truncate">{post.title}</h4>
+                      <h4 className="font-medium text-sm truncate">
+                        {post.title}
+                      </h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={
-                          post.status === 'published' ? 'default' :
-                          post.status === 'draft' ? 'secondary' : 'outline'
-                        }>
+                        <Badge
+                          variant={
+                            post.status === "published"
+                              ? "default"
+                              : post.status === "draft"
+                                ? "secondary"
+                                : "outline"
+                          }
+                        >
                           {post.status}
                         </Badge>
-                        <span className="text-xs text-gray-500">{post.blog}</span>
-                        <span className="text-xs text-gray-500">{post.wordCount} palavras</span>
+                        <span className="text-xs text-gray-500">
+                          {post.blog}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {post.wordCount} palavras
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -394,7 +425,12 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                 <Label>Status</Label>
                 <select
                   value={bulkEdits.status}
-                  onChange={(e) => setBulkEdits(prev => ({ ...prev, status: e.target.value }))}
+                  onChange={(e) =>
+                    setBulkEdits((prev) => ({
+                      ...prev,
+                      status: e.target.value,
+                    }))
+                  }
                   className="w-full p-2 border border-gray-300 rounded-md"
                 >
                   <option value="">Não alterar</option>
@@ -408,12 +444,13 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                 <Label>Blog</Label>
                 <select
                   value={bulkEdits.blog}
-                  onChange={(e) => setBulkEdits(prev => ({ ...prev, blog: e.target.value }))}
+                  onChange={(e) =>
+                    setBulkEdits((prev) => ({ ...prev, blog: e.target.value }))
+                  }
                   className="w-full p-2 border border-gray-300 rounded-md"
                 >
                   <option value="">Não alterar</option>
-                  <option value="einsof7">Einsof7</option>
-                  <option value="opetmil">Opetmil</option>
+                  <option value="Optemil">Optemil</option>
                 </select>
               </div>
 
@@ -422,7 +459,12 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                 <Input
                   type="datetime-local"
                   value={bulkEdits.publishDate}
-                  onChange={(e) => setBulkEdits(prev => ({ ...prev, publishDate: e.target.value }))}
+                  onChange={(e) =>
+                    setBulkEdits((prev) => ({
+                      ...prev,
+                      publishDate: e.target.value,
+                    }))
+                  }
                 />
               </div>
 
@@ -433,16 +475,20 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                 <Input
                   placeholder="Digite uma categoria e pressione Enter"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addCategory(e.currentTarget.value)
-                      e.currentTarget.value = ''
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addCategory(e.currentTarget.value);
+                      e.currentTarget.value = "";
                     }
                   }}
                 />
                 <div className="flex flex-wrap gap-1">
                   {bulkEdits.categories.map((category) => (
-                    <Badge key={category} variant="secondary" className="cursor-pointer">
+                    <Badge
+                      key={category}
+                      variant="secondary"
+                      className="cursor-pointer"
+                    >
                       {category}
                       <button
                         onClick={() => removeCategory(category)}
@@ -460,16 +506,20 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                 <Input
                   placeholder="Digite uma tag e pressione Enter"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addTag(e.currentTarget.value)
-                      e.currentTarget.value = ''
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag(e.currentTarget.value);
+                      e.currentTarget.value = "";
                     }
                   }}
                 />
                 <div className="flex flex-wrap gap-1">
                   {bulkEdits.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="cursor-pointer">
+                    <Badge
+                      key={tag}
+                      variant="outline"
+                      className="cursor-pointer"
+                    >
                       {tag}
                       <button
                         onClick={() => removeTag(tag)}
@@ -495,7 +545,12 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                     <Label>Meta Título</Label>
                     <Input
                       value={bulkEdits.metaTitle}
-                      onChange={(e) => setBulkEdits(prev => ({ ...prev, metaTitle: e.target.value }))}
+                      onChange={(e) =>
+                        setBulkEdits((prev) => ({
+                          ...prev,
+                          metaTitle: e.target.value,
+                        }))
+                      }
                       placeholder="Substituir meta título..."
                     />
                   </div>
@@ -504,7 +559,12 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                     <Label>Meta Descrição</Label>
                     <Textarea
                       value={bulkEdits.metaDescription}
-                      onChange={(e) => setBulkEdits(prev => ({ ...prev, metaDescription: e.target.value }))}
+                      onChange={(e) =>
+                        setBulkEdits((prev) => ({
+                          ...prev,
+                          metaDescription: e.target.value,
+                        }))
+                      }
                       placeholder="Substituir meta descrição..."
                       rows={3}
                     />
@@ -516,12 +576,12 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                     <Zap className="h-4 w-4 mr-2" />
                     Otimizar SEO com IA
                   </Button>
-                  
+
                   <Button variant="outline" className="w-full" disabled>
                     <Target className="h-4 w-4 mr-2" />
                     Gerar Keywords
                   </Button>
-                  
+
                   <Button variant="outline" className="w-full" disabled>
                     <Upload className="h-4 w-4 mr-2" />
                     Sincronizar WordPress
@@ -532,7 +592,7 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
               <Separator />
 
               <div className="space-y-2">
-                <Button 
+                <Button
                   onClick={handleBulkUpdate}
                   disabled={selectedPosts.length === 0 || isProcessing}
                   className="w-full"
@@ -545,7 +605,7 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
                   Aplicar Alterações ({selectedPosts.length})
                 </Button>
 
-                <Button 
+                <Button
                   variant="destructive"
                   onClick={handleBulkDelete}
                   disabled={selectedPosts.length === 0 || isProcessing}
@@ -567,9 +627,14 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
               <CardContent>
                 <div className="space-y-2">
                   {selectedPostsData.slice(0, 5).map((post) => (
-                    <div key={post.id} className="text-xs p-2 bg-gray-50 rounded">
+                    <div
+                      key={post.id}
+                      className="text-xs p-2 bg-gray-50 rounded"
+                    >
                       <div className="font-medium truncate">{post.title}</div>
-                      <div className="text-gray-500">{post.blog} • {post.status}</div>
+                      <div className="text-gray-500">
+                        {post.blog} • {post.status}
+                      </div>
                     </div>
                   ))}
                   {selectedPosts.length > 5 && (
@@ -584,5 +649,5 @@ export function BulkPostEditor({ posts, onSave, onClose }: BulkPostEditorProps) 
         </div>
       </div>
     </div>
-  )
+  );
 }

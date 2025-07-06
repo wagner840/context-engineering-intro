@@ -1,86 +1,89 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { ContentPost } from '@/types/database-extended'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { 
-  FileText, 
-  Plus, 
-  Search, 
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { ContentPost } from "@/types/database-extended";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  FileText,
+  Plus,
+  Search,
   MoreVertical,
   Eye,
   Edit,
   Trash2,
   Globe,
   RefreshCw,
-  ArrowLeft
-} from 'lucide-react'
+  ArrowLeft,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu";
 
 export default function PostsPage() {
-  const { id: blogId } = useParams()
-  const router = useRouter()
-  
-  const [posts, setPosts] = useState<ContentPost[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const { id: blogId } = useParams();
+  const router = useRouter();
+
+  const [posts, setPosts] = useState<ContentPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const loadPosts = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("content_posts")
+        .select("*")
+        .eq("blog_id", Array.isArray(blogId) ? blogId[0] : blogId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setPosts((data || []) as any);
+    } catch (err) {
+      console.error("Erro ao carregar posts:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [blogId]);
 
   useEffect(() => {
     if (blogId) {
-      loadPosts()
+      loadPosts();
     }
-  }, [blogId])
+  }, [blogId, loadPosts]);
 
-  const loadPosts = async () => {
-    setLoading(true)
-    
-    try {
-      const { data, error } = await supabase
-        .from('content_posts')
-        .select('*')
-        .eq('blog_id', Array.isArray(blogId) ? blogId[0] : blogId)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setPosts((data || []) as any)
-    } catch (err) {
-      console.error('Erro ao carregar posts:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || post.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  const filteredPosts = posts.filter((post) => {
+    const matchesSearch = post.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || post.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      published: 'default',
-      draft: 'secondary',
-      scheduled: 'outline',
-      trash: 'destructive'
-    } as const
+      published: "default",
+      draft: "secondary",
+      scheduled: "outline",
+      trash: "destructive",
+    } as const;
 
     return (
-      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
+      <Badge variant={variants[status as keyof typeof variants] || "secondary"}>
         {status}
       </Badge>
-    )
-  }
+    );
+  };
 
   if (loading) {
     return (
@@ -92,7 +95,7 @@ export default function PostsPage() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -100,10 +103,10 @@ export default function PostsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
-            onClick={() => router.push('/blogs')}
+            onClick={() => router.push("/blogs")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
@@ -157,7 +160,9 @@ export default function PostsPage() {
         {filteredPosts.length === 0 ? (
           <Card className="p-12 text-center">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum post encontrado</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Nenhum post encontrado
+            </h3>
             <p className="text-muted-foreground mb-4">
               Comece criando seu primeiro post
             </p>
@@ -168,7 +173,10 @@ export default function PostsPage() {
           </Card>
         ) : (
           filteredPosts.map((post) => (
-            <Card key={post.id} className="p-4 hover:shadow-md transition-shadow">
+            <Card
+              key={post.id}
+              className="p-4 hover:shadow-md transition-shadow"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <h3 className="font-semibold">{post.title}</h3>
@@ -194,14 +202,18 @@ export default function PostsPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => router.push(`/blogs/${blogId}/posts/${post.id}/view`)}
+                    onClick={() =>
+                      router.push(`/blogs/${blogId}/posts/${post.id}/view`)
+                    }
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => router.push(`/blogs/${blogId}/posts/${post.id}/edit`)}
+                    onClick={() =>
+                      router.push(`/blogs/${blogId}/posts/${post.id}/edit`)
+                    }
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -214,7 +226,7 @@ export default function PostsPage() {
                     <DropdownMenuContent align="end">
                       {post.wordpress_post_id && (
                         <DropdownMenuItem
-                          onClick={() => window.open(post.slug, '_blank')}
+                          onClick={() => window.open(post.slug, "_blank")}
                         >
                           <Globe className="h-4 w-4 mr-2" />
                           Ver no WordPress
@@ -233,5 +245,5 @@ export default function PostsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

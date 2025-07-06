@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -47,8 +47,8 @@ interface BlogCardProps {
 function BlogCard({ blog, onSync, isSyncing }: BlogCardProps) {
   const router = useRouter();
 
-  const getBlogTypeFromDomain = (domain: string): "einsof7" | "opetmil" => {
-    return domain.includes("einsof7") ? "einsof7" : "opetmil";
+  const getBlogTypeFromDomain = (domain: string): "einsof7" | "Optemil" => {
+    return domain.includes("einsof7") ? "einsof7" : "Optemil";
   };
 
   return (
@@ -185,7 +185,7 @@ function N8nStatus() {
   const [status, setStatus] = useState<"checking" | "online" | "offline">(
     "checking"
   );
-  const n8nService = new N8nService();
+  const n8nService = useMemo(() => new N8nService(), []);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -201,7 +201,7 @@ function N8nStatus() {
     const interval = setInterval(checkStatus, 30000); // Check every 30s
 
     return () => clearInterval(interval);
-  }, []);
+  }, [n8nService]);
 
   return (
     <div className="flex items-center gap-2">
@@ -230,7 +230,7 @@ function N8nStatus() {
 export function BlogsOverview() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const n8nService = new N8nService();
+  const n8nService = useMemo(() => new N8nService(), []);
   const [syncingBlogId, setSyncingBlogId] = useState<string | null>(null);
 
   // Buscar blogs ativos

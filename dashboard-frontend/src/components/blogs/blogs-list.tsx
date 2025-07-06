@@ -1,67 +1,73 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { 
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
   Globe,
   ExternalLink,
   Settings,
   BarChart3,
   FileText,
   Target,
-} from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+} from "lucide-react";
+import { useBlog } from "@/contexts/blog-context";
 
 interface Blog {
-  id: string
-  name: string
-  url: string
-  niche: string
-  description: string
-  status: 'active' | 'inactive' | 'suspended'
+  id: string;
+  name: string;
+  url: string;
+  niche: string;
+  description: string;
+  status: "active" | "inactive" | "suspended";
   wordpress_config: {
-    api_url: string
-    username: string
-  }
+    api_url: string;
+    username: string;
+  };
   n8n_config?: {
-    webhook_url: string
-    workflow_id: string
-  }
-  created_at: string
+    webhook_url: string;
+    workflow_id: string;
+  };
+  created_at: string;
   stats?: {
-    posts_count: number
-    keywords_count: number
-    opportunities_count: number
-  }
+    posts_count: number;
+    keywords_count: number;
+    opportunities_count: number;
+  };
 }
 
 function BlogCard({ blog, delay = 0 }: { blog: Blog; delay?: number }) {
-  const router = useRouter()
+  const router = useRouter();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return <Badge className="bg-green-100 text-green-800">Ativo</Badge>
-      case 'inactive':
-        return <Badge variant="secondary">Inativo</Badge>
-      case 'suspended':
-        return <Badge variant="destructive">Suspenso</Badge>
+      case "active":
+        return <Badge className="bg-green-100 text-green-800">Ativo</Badge>;
+      case "inactive":
+        return <Badge variant="secondary">Inativo</Badge>;
+      case "suspended":
+        return <Badge variant="destructive">Suspenso</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="outline">{status}</Badge>;
     }
-  }
+  };
 
   const handleSelectBlog = () => {
-    router.push(`/blogs/${blog.id}`)
-  }
+    router.push(`/blogs/${blog.id}`);
+  };
 
   const handleViewPosts = () => {
-    router.push(`/blogs/${blog.id}/posts`)
-  }
+    router.push(`/blogs/${blog.id}/posts`);
+  };
 
   return (
     <motion.div
@@ -73,7 +79,7 @@ function BlogCard({ blog, delay = 0 }: { blog: Blog; delay?: number }) {
       <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300">
         {/* Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 group-hover:from-blue-500/10 group-hover:to-purple-500/10 transition-all" />
-        
+
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="space-y-1 flex-1">
@@ -90,15 +96,15 @@ function BlogCard({ blog, delay = 0 }: { blog: Blog; delay?: number }) {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {/* Blog Info */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <ExternalLink className="h-4 w-4" />
-              <a 
-                href={blog.url} 
-                target="_blank" 
+              <a
+                href={blog.url}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-primary transition-colors truncate"
               >
@@ -130,26 +136,20 @@ function BlogCard({ blog, delay = 0 }: { blog: Blog; delay?: number }) {
                 <div className="text-lg font-semibold text-orange-600">
                   {blog.stats.opportunities_count}
                 </div>
-                <div className="text-xs text-muted-foreground">Oportunidades</div>
+                <div className="text-xs text-muted-foreground">
+                  Oportunidades
+                </div>
               </div>
             </div>
           )}
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2">
-            <Button 
-              size="sm" 
-              onClick={handleSelectBlog}
-              className="flex-1"
-            >
+            <Button size="sm" onClick={handleSelectBlog} className="flex-1">
               <BarChart3 className="h-4 w-4 mr-2" />
               Selecionar
             </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={handleViewPosts}
-            >
+            <Button size="sm" variant="outline" onClick={handleViewPosts}>
               <FileText className="h-4 w-4 mr-2" />
               Posts
             </Button>
@@ -160,7 +160,7 @@ function BlogCard({ blog, delay = 0 }: { blog: Blog; delay?: number }) {
         </CardContent>
       </Card>
     </motion.div>
-  )
+  );
 }
 
 function BlogCardSkeleton() {
@@ -195,71 +195,20 @@ function BlogCardSkeleton() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export function BlogsList() {
-  const { data: blogs, isLoading, error } = useQuery({
-    queryKey: ['blogs'],
-    queryFn: async (): Promise<Blog[]> => {
-      const response = await fetch('/api/blogs?active=true')
-      if (!response.ok) {
-        throw new Error('Failed to fetch blogs')
-      }
-      const result = await response.json()
-      return result.data || []
-    }
-  })
+  const { blogs, isLoading } = useBlog();
 
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 2 }).map((_, i) => (
           <BlogCardSkeleton key={i} />
         ))}
       </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card className="border-destructive/50 bg-destructive/5">
-        <CardContent className="flex items-center justify-center p-12">
-          <div className="text-center space-y-2">
-            <p className="text-destructive font-medium">
-              Erro ao carregar blogs
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Verifique sua conexão e tente novamente
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!blogs || blogs.length === 0) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="flex items-center justify-center p-12">
-          <div className="text-center space-y-4">
-            <div className="h-16 w-16 mx-auto rounded-full bg-muted flex items-center justify-center">
-              <Globe className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Nenhum blog configurado</h3>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                Configure seu primeiro blog WordPress para começar a gerenciar conteúdo
-              </p>
-            </div>
-            <Button>
-              <Globe className="h-4 w-4 mr-2" />
-              Adicionar Blog
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
+    );
   }
 
   return (
@@ -268,20 +217,16 @@ export function BlogsList() {
         <div>
           <h2 className="text-xl font-semibold">Seus Blogs</h2>
           <p className="text-sm text-muted-foreground">
-            {blogs.length} blog{blogs.length !== 1 ? 's' : ''} configurado{blogs.length !== 1 ? 's' : ''}
+            {blogs.length} blog{blogs.length !== 1 ? "s" : ""} configurado
+            {blogs.length !== 1 ? "s" : ""}
           </p>
         </div>
       </div>
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {blogs.map((blog, index) => (
-          <BlogCard
-            key={blog.id}
-            blog={blog}
-            delay={index * 0.1}
-          />
+          <BlogCard key={blog.id} blog={blog} delay={index * 0.1} />
         ))}
       </div>
     </div>
-  )
+  );
 }

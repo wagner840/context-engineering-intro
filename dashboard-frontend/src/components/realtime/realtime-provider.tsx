@@ -42,10 +42,14 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     "connecting" | "connected" | "disconnected" | "error"
   >("disconnected");
   const [events, setEvents] = useState<RealtimeEvent[]>([]);
-  
+
   // Use refs to avoid re-creating functions and causing infinite loops
-  const subscriptionsRef = useRef<Map<string, ReturnType<typeof supabaseRef.current.channel>>>(new Map());
-  const callbacksRef = useRef<Map<string, Set<(event: RealtimeEvent) => void>>>(new Map());
+  const subscriptionsRef = useRef<
+    Map<string, ReturnType<typeof supabaseRef.current.channel>>
+  >(new Map());
+  const callbacksRef = useRef<Map<string, Set<(event: RealtimeEvent) => void>>>(
+    new Map()
+  );
   const supabaseRef = useRef(createSupabaseClient());
   const notificationsRef = useRef(useNotifications());
   const blogStoreRef = useRef(useBlogStore());
@@ -106,7 +110,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
               // Show notification for important events (throttled)
               if (
-                (table === "content_posts" || table === "workflow_executions") &&
+                (table === "content_posts" ||
+                  table === "workflow_executions") &&
                 payload.eventType === "INSERT"
               ) {
                 const action = payload.eventType.toLowerCase();
@@ -185,10 +190,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       setConnectionStatus("connecting");
 
       // Subscribe to important tables with minimal callbacks
-      const coreSubscriptions = [
-        "content_posts",
-        "workflow_executions",
-      ];
+      const coreSubscriptions = ["content_posts", "workflow_executions"];
 
       const unsubscribeFunctions: (() => void)[] = [];
 
@@ -207,14 +209,9 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
   // Cleanup on unmount
   useEffect(() => {
-    const subs = subscriptionsRef.current;
-    const supabase = supabaseRef.current;
+    const currentCallbacks = callbacksRef.current;
     return () => {
-      subs.forEach((channel) => {
-        supabase.removeChannel(channel);
-      });
-      subs.clear();
-      callbacksRef.current.clear();
+      currentCallbacks.clear();
     };
   }, []);
 

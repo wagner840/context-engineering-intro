@@ -1,168 +1,181 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
-import { 
-  Database, 
-  RefreshCw, 
-  CheckCircle, 
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Database,
+  RefreshCw,
+  CheckCircle,
   AlertCircle,
   Globe,
   Key,
   FileText,
   Settings,
   Play,
-  Zap
-} from 'lucide-react'
-import { runBlogSetup } from '@/scripts/setup-blogs'
-import { supabase } from '@/lib/supabase'
+  Zap,
+} from "lucide-react";
+import { runBlogSetup } from "@/scripts/setup-blogs";
+import { supabase } from "@/lib/supabase";
 
 interface SetupStatus {
-  blogs: 'pending' | 'running' | 'success' | 'error'
-  wordpress: 'pending' | 'running' | 'success' | 'error'
-  sync: 'pending' | 'running' | 'success' | 'error'
-  keywords: 'pending' | 'running' | 'success' | 'error'
+  blogs: "pending" | "running" | "success" | "error";
+  wordpress: "pending" | "running" | "success" | "error";
+  sync: "pending" | "running" | "success" | "error";
+  keywords: "pending" | "running" | "success" | "error";
 }
 
 export default function AdminSetupPage() {
   const [setupStatus, setSetupStatus] = useState<SetupStatus>({
-    blogs: 'pending',
-    wordpress: 'pending',
-    sync: 'pending',
-    keywords: 'pending'
-  })
-  const [logs, setLogs] = useState<string[]>([])
-  const [isRunning, setIsRunning] = useState(false)
-  const [blogStats, setBlogStats] = useState<any>(null)
+    blogs: "pending",
+    wordpress: "pending",
+    sync: "pending",
+    keywords: "pending",
+  });
+  const [logs, setLogs] = useState<string[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [blogStats, setBlogStats] = useState<any>(null);
 
   const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString('pt-BR')
-    setLogs(prev => [...prev, `[${timestamp}] ${message}`])
-  }
+    const timestamp = new Date().toLocaleTimeString("pt-BR");
+    setLogs((prev) => [...prev, `[${timestamp}] ${message}`]);
+  };
 
   const runFullSetup = async () => {
-    setIsRunning(true)
-    setLogs([])
-    
+    setIsRunning(true);
+    setLogs([]);
+
     try {
-      addLog('🚀 Iniciando configuração completa dos blogs einsof7 e optemil...')
-      
+      addLog(
+        "🚀 Iniciando configuração completa dos blogs einsof7 e Optemil..."
+      );
+
       // Reset status
       setSetupStatus({
-        blogs: 'running',
-        wordpress: 'pending',
-        sync: 'pending',
-        keywords: 'pending'
-      })
+        blogs: "running",
+        wordpress: "pending",
+        sync: "pending",
+        keywords: "pending",
+      });
 
-      addLog('📝 Configurando blogs no Supabase...')
-      
+      addLog("📝 Configurando blogs no Supabase...");
+
       // Executar o setup
-      const result = await runBlogSetup()
-      
+      const result = await runBlogSetup();
+
       if (result.success) {
-        setSetupStatus(prev => ({ ...prev, blogs: 'success', wordpress: 'running' }))
-        addLog('✅ Blogs configurados no Supabase com sucesso!')
-        
-        addLog('🔌 Testando conexões WordPress...')
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Simular delay
-        
-        setSetupStatus(prev => ({ ...prev, wordpress: 'success', sync: 'running' }))
-        addLog('✅ Conexões WordPress estabelecidas!')
-        
-        addLog('📥 Sincronizando posts do WordPress...')
-        await new Promise(resolve => setTimeout(resolve, 2000)) // Simular delay
-        
-        setSetupStatus(prev => ({ ...prev, sync: 'success', keywords: 'running' }))
-        addLog('✅ Posts sincronizados com sucesso!')
-        
-        addLog('🔑 Configurando palavras-chave...')
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Simular delay
-        
-        setSetupStatus(prev => ({ ...prev, keywords: 'success' }))
-        addLog('✅ Palavras-chave configuradas!')
-        
-        addLog('🎉 Configuração completa finalizada com sucesso!')
-        
+        setSetupStatus((prev) => ({
+          ...prev,
+          blogs: "success",
+          wordpress: "running",
+        }));
+        addLog("✅ Blogs configurados no Supabase com sucesso!");
+
+        addLog("🔌 Testando conexões WordPress...");
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simular delay
+
+        setSetupStatus((prev) => ({
+          ...prev,
+          wordpress: "success",
+          sync: "running",
+        }));
+        addLog("✅ Conexões WordPress estabelecidas!");
+
+        addLog("📥 Sincronizando posts do WordPress...");
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simular delay
+
+        setSetupStatus((prev) => ({
+          ...prev,
+          sync: "success",
+          keywords: "running",
+        }));
+        addLog("✅ Posts sincronizados com sucesso!");
+
+        addLog("🔑 Configurando palavras-chave...");
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simular delay
+
+        setSetupStatus((prev) => ({ ...prev, keywords: "success" }));
+        addLog("✅ Palavras-chave configuradas!");
+
+        addLog("🎉 Configuração completa finalizada com sucesso!");
+
         // Carregar estatísticas
-        await loadBlogStats()
-        
+        await loadBlogStats();
       } else {
-        setSetupStatus(prev => ({ ...prev, blogs: 'error' }))
-        addLog(`❌ Erro na configuração: ${result.error}`)
+        setSetupStatus((prev) => ({ ...prev, blogs: "error" }));
+        addLog(`❌ Erro na configuração: ${result.error}`);
       }
-      
     } catch (error) {
-      addLog(`❌ Erro geral: ${(error as Error).message}`)
-      setSetupStatus(prev => ({ 
-        ...prev, 
-        blogs: prev.blogs === 'running' ? 'error' : prev.blogs,
-        wordpress: prev.wordpress === 'running' ? 'error' : prev.wordpress,
-        sync: prev.sync === 'running' ? 'error' : prev.sync,
-        keywords: prev.keywords === 'running' ? 'error' : prev.keywords
-      }))
+      addLog(`❌ Erro geral: ${(error as Error).message}`);
+      setSetupStatus((prev) => ({
+        ...prev,
+        blogs: prev.blogs === "running" ? "error" : prev.blogs,
+        wordpress: prev.wordpress === "running" ? "error" : prev.wordpress,
+        sync: prev.sync === "running" ? "error" : prev.sync,
+        keywords: prev.keywords === "running" ? "error" : prev.keywords,
+      }));
     } finally {
-      setIsRunning(false)
+      setIsRunning(false);
     }
-  }
+  };
 
   const loadBlogStats = async () => {
     try {
       const { data: blogs } = await supabase
-        .from('blogs')
-        .select('*')
-        .in('domain', ['einsof7.com', 'opetmil.com'])
+        .from("blogs")
+        .select("*")
+        .in("domain", ["einsof7.com", "Optemil.com"]);
 
       const { data: posts } = await supabase
-        .from('content_posts')
-        .select('blog_id')
-        .in('blog_id', blogs?.map(b => b.id) || [])
+        .from("content_posts")
+        .select("blog_id")
+        .in("blog_id", blogs?.map((b) => b.id) || []);
 
       const { data: keywords } = await supabase
-        .from('main_keywords')
-        .select('blog_id')
-        .in('blog_id', blogs?.map(b => b.id) || [])
+        .from("main_keywords")
+        .select("blog_id")
+        .in("blog_id", blogs?.map((b) => b.id) || []);
 
       setBlogStats({
         totalBlogs: blogs?.length || 0,
         totalPosts: posts?.length || 0,
         totalKeywords: keywords?.length || 0,
-        blogs: blogs || []
-      })
-
+        blogs: blogs || [],
+      });
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error)
+      console.error("Erro ao carregar estatísticas:", error);
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-600" />
-      case 'error':
-        return <AlertCircle className="h-5 w-5 text-red-600" />
-      case 'running':
-        return <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />
+      case "success":
+        return <CheckCircle className="h-5 w-5 text-green-600" />;
+      case "error":
+        return <AlertCircle className="h-5 w-5 text-red-600" />;
+      case "running":
+        return <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />;
       default:
-        return <div className="h-5 w-5 rounded-full bg-gray-300" />
+        return <div className="h-5 w-5 rounded-full bg-gray-300" />;
     }
-  }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'success':
-        return <Badge className="bg-green-100 text-green-800">Concluído</Badge>
-      case 'error':
-        return <Badge className="bg-red-100 text-red-800">Erro</Badge>
-      case 'running':
-        return <Badge className="bg-blue-100 text-blue-800">Executando...</Badge>
+      case "success":
+        return <Badge className="bg-green-100 text-green-800">Concluído</Badge>;
+      case "error":
+        return <Badge className="bg-red-100 text-red-800">Erro</Badge>;
+      case "running":
+        return (
+          <Badge className="bg-blue-100 text-blue-800">Executando...</Badge>
+        );
       default:
-        return <Badge variant="secondary">Pendente</Badge>
+        return <Badge variant="secondary">Pendente</Badge>;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
@@ -173,13 +186,14 @@ export default function AdminSetupPage() {
             Configuração de Blogs
           </h1>
           <p className="text-xl text-muted-foreground">
-            Setup automático para <strong>einsof7.com</strong> e <strong>opetmil.com</strong>
+            Setup automático para <strong>einsof7.com</strong> e{" "}
+            <strong>Optemil.com</strong>
           </p>
         </div>
 
         {/* Action Button */}
         <div className="text-center mb-8">
-          <Button 
+          <Button
             onClick={runFullSetup}
             disabled={isRunning}
             size="lg"
@@ -273,7 +287,7 @@ export default function AdminSetupPage() {
             </CardHeader>
             <CardContent>
               <Textarea
-                value={logs.join('\n')}
+                value={logs.join("\n")}
                 readOnly
                 className="min-h-[300px] font-mono text-sm"
                 placeholder="Os logs de execução aparecerão aqui..."
@@ -294,28 +308,41 @@ export default function AdminSetupPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
-                      <p className="text-2xl font-bold text-primary">{blogStats.totalBlogs}</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {blogStats.totalBlogs}
+                      </p>
                       <p className="text-sm text-muted-foreground">Blogs</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-green-600">{blogStats.totalPosts}</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {blogStats.totalPosts}
+                      </p>
                       <p className="text-sm text-muted-foreground">Posts</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-blue-600">{blogStats.totalKeywords}</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {blogStats.totalKeywords}
+                      </p>
                       <p className="text-sm text-muted-foreground">Keywords</p>
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     {blogStats.blogs.map((blog: any) => (
-                      <div key={blog.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div
+                        key={blog.id}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                      >
                         <div>
                           <p className="font-semibold">{blog.name}</p>
-                          <p className="text-sm text-muted-foreground">{blog.domain}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {blog.domain}
+                          </p>
                         </div>
-                        <Badge variant={blog.is_active ? 'default' : 'secondary'}>
-                          {blog.is_active ? 'Ativo' : 'Inativo'}
+                        <Badge
+                          variant={blog.is_active ? "default" : "secondary"}
+                        >
+                          {blog.is_active ? "Ativo" : "Inativo"}
                         </Badge>
                       </div>
                     ))}
@@ -324,7 +351,9 @@ export default function AdminSetupPage() {
               ) : (
                 <div className="text-center py-8">
                   <Database className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Execute a configuração para ver as estatísticas</p>
+                  <p className="text-muted-foreground">
+                    Execute a configuração para ver as estatísticas
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -342,7 +371,9 @@ export default function AdminSetupPage() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold mb-2">🤖 Einsof7 - Tecnologia e IA</h3>
+                <h3 className="font-semibold mb-2">
+                  🤖 Einsof7 - Tecnologia e IA
+                </h3>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• URL: https://einsof7.com</li>
                   <li>• Nicho: Inteligência Artificial</li>
@@ -350,11 +381,13 @@ export default function AdminSetupPage() {
                   <li>• Keywords: IA, Machine Learning, Dev</li>
                 </ul>
               </div>
-              
+
               <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold mb-2">📈 Opetmil - Marketing Digital</h3>
+                <h3 className="font-semibold mb-2">
+                  📈 Optemil - Marketing Digital
+                </h3>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• URL: https://opetmil.com</li>
+                  <li>• URL: https://Optemil.com</li>
                   <li>• Nicho: Marketing Digital</li>
                   <li>• Sincronização: Bilateral WordPress ↔ Supabase</li>
                   <li>• Keywords: SEO, Google Ads, Marketing</li>
@@ -365,5 +398,5 @@ export default function AdminSetupPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

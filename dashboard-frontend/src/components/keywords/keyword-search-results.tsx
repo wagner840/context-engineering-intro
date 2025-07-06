@@ -1,72 +1,90 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, Filter, TrendingUp, Target, BarChart3, Plus, Eye, Star } from 'lucide-react'
-import { useKeywords, useMarkKeywordAsUsed } from '@/hooks/use-keywords'
-import { motion } from 'framer-motion'
-import { KeywordSearchFilters } from '@/types/database'
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Search,
+  Filter,
+  TrendingUp,
+  Target,
+  BarChart3,
+  Plus,
+  Eye,
+  Star,
+} from "lucide-react";
+import { useKeywords, useMarkKeywordAsUsed } from "@/hooks/use-keywords";
+import { motion } from "framer-motion";
+import { KeywordSearchFilters } from "@/types/database";
 
 interface KeywordSearchResultsProps {
-  query: string
-  blogId: string
+  query: string;
+  blogId: string;
 }
 
-export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProps) {
+export function KeywordSearchResults({
+  query,
+  blogId,
+}: KeywordSearchResultsProps) {
   const [filters, setFilters] = useState<Partial<KeywordSearchFilters>>({
     competition: undefined,
     search_intent: undefined,
     is_used: undefined,
-    min_volume: undefined,
+    min_msv: undefined,
     max_difficulty: undefined,
-  })
+  });
 
   const { data: keywordsData, isLoading } = useKeywords({
     search: query,
-    blog_id: blogId === 'all' ? undefined : blogId,
+    blog_id: blogId === "all" ? undefined : blogId,
     ...filters,
-  })
+  });
 
-  const markAsUsed = useMarkKeywordAsUsed()
-  const keywords = keywordsData?.data || []
+  const markAsUsed = useMarkKeywordAsUsed();
+  const keywords = keywordsData?.data || [];
 
   const getCompetitionColor = (competition: string) => {
     switch (competition) {
-      case 'LOW':
-        return 'bg-green-100 text-green-800'
-      case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'HIGH':
-        return 'bg-red-100 text-red-800'
+      case "LOW":
+        return "bg-green-100 text-green-800";
+      case "MEDIUM":
+        return "bg-yellow-100 text-yellow-800";
+      case "HIGH":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800'
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const getIntentIcon = (intent: string) => {
     switch (intent) {
-      case 'informational':
-        return '📚'
-      case 'navigational':
-        return '🧭'
-      case 'commercial':
-        return '🛍️'
-      case 'transactional':
-        return '💰'
+      case "informational":
+        return "📚";
+      case "navigational":
+        return "🧭";
+      case "commercial":
+        return "🛍️";
+      case "transactional":
+        return "💰";
       default:
-        return '❓'
+        return "❓";
     }
-  }
+  };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600'
-    if (score >= 60) return 'text-yellow-600'
-    return 'text-red-600'
-  }
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
 
   if (!query.trim()) {
     return (
@@ -81,7 +99,7 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (isLoading) {
@@ -93,12 +111,15 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
         <CardContent>
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse" />
+              <div
+                key={i}
+                className="h-20 bg-gray-100 rounded-lg animate-pulse"
+              />
             ))}
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -113,9 +134,14 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <Select 
-              value={filters.competition} 
-              onValueChange={(value) => setFilters(prev => ({ ...prev, competition: value as "LOW" | "MEDIUM" | "HIGH" | undefined }))}
+            <Select
+              value={filters.competition}
+              onValueChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  competition: value as "LOW" | "MEDIUM" | "HIGH" | undefined,
+                }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Competição" />
@@ -128,9 +154,19 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
               </SelectContent>
             </Select>
 
-            <Select 
-              value={filters.search_intent} 
-              onValueChange={(value) => setFilters(prev => ({ ...prev, search_intent: value as "informational" | "navigational" | "commercial" | "transactional" | undefined }))}
+            <Select
+              value={filters.search_intent}
+              onValueChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  search_intent: value as
+                    | "informational"
+                    | "navigational"
+                    | "commercial"
+                    | "transactional"
+                    | undefined,
+                }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Intenção" />
@@ -146,21 +182,33 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
 
             <Input
               placeholder="MSV mínimo"
-              value={filters.min_volume}
-              onChange={(e) => setFilters(prev => ({ ...prev, min_volume: Number(e.target.value) }))}
+              value={filters.min_msv}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  min_msv: Number(e.target.value),
+                }))
+              }
               type="number"
             />
 
             <Input
               placeholder="Dificuldade máx"
               value={filters.max_difficulty}
-              onChange={(e) => setFilters(prev => ({ ...prev, max_difficulty: Number(e.target.value) }))}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  max_difficulty: Number(e.target.value),
+                }))
+              }
               type="number"
             />
 
-            <Select 
-              value={String(filters.is_used)} 
-              onValueChange={(value) => setFilters(prev => ({ ...prev, is_used: value === 'true' }))}
+            <Select
+              value={String(filters.is_used)}
+              onValueChange={(value) =>
+                setFilters((prev) => ({ ...prev, is_used: value === "true" }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
@@ -179,7 +227,8 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
       <Card>
         <CardHeader>
           <CardTitle>
-            Resultados para &quot;{query}&quot; ({keywords.length} keywords encontradas)
+            Resultados para &quot;{query}&quot; ({keywords.length} keywords
+            encontradas)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -188,7 +237,9 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
               <div className="h-16 w-16 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-4">
                 <Search className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Nenhuma keyword encontrada</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                Nenhuma keyword encontrada
+              </h3>
               <p className="text-gray-600">
                 Tente ajustar sua busca ou usar filtros diferentes
               </p>
@@ -207,23 +258,34 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
                     <div className="flex-1 space-y-3">
                       {/* Keyword principal */}
                       <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold">{keyword.keyword}</h3>
-                        
+                        <h3 className="text-lg font-semibold">
+                          {keyword.keyword}
+                        </h3>
+
                         {keyword.is_used && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
+                          <Badge
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
                             <Star className="h-3 w-3" />
                             Em uso
                           </Badge>
                         )}
-                        
-                        <Badge className={getCompetitionColor(keyword.competition || '')}>
-                          {keyword.competition || 'N/A'}
+
+                        <Badge
+                          className={getCompetitionColor(
+                            keyword.competition || ""
+                          )}
+                        >
+                          {keyword.competition || "N/A"}
                         </Badge>
-                        
+
                         <div className="flex items-center gap-1">
-                          <span>{getIntentIcon(keyword.search_intent || '')}</span>
+                          <span>
+                            {getIntentIcon(keyword.search_intent || "")}
+                          </span>
                           <span className="text-sm text-gray-600">
-                            {keyword.search_intent || 'N/A'}
+                            {keyword.search_intent || "N/A"}
                           </span>
                         </div>
                       </div>
@@ -235,7 +297,7 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
                           <div>
                             <p className="text-gray-600">Volume (MSV)</p>
                             <p className="font-semibold">
-                              {keyword.msv?.toLocaleString() || 'N/A'}
+                              {keyword.msv?.toLocaleString() || "N/A"}
                             </p>
                           </div>
                         </div>
@@ -244,8 +306,10 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
                           <Target className="h-4 w-4 text-orange-600" />
                           <div>
                             <p className="text-gray-600">Dificuldade</p>
-                            <p className={`font-semibold ${getScoreColor(keyword.kw_difficulty || 0)}`}>
-                              {keyword.kw_difficulty || 'N/A'}
+                            <p
+                              className={`font-semibold ${getScoreColor(keyword.kw_difficulty || 0)}`}
+                            >
+                              {keyword.kw_difficulty || "N/A"}
                             </p>
                           </div>
                         </div>
@@ -255,19 +319,23 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
                           <div>
                             <p className="text-gray-600">CPC</p>
                             <p className="font-semibold">
-                              R$ {keyword.cpc?.toFixed(2) || 'N/A'}
+                              R$ {keyword.cpc?.toFixed(2) || "N/A"}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <div className="h-4 w-4 rounded-full bg-purple-600 flex items-center justify-center">
-                            <span className="text-xs text-white font-bold">S</span>
+                            <span className="text-xs text-white font-bold">
+                              S
+                            </span>
                           </div>
                           <div>
                             <p className="text-gray-600">Score SEO</p>
-                            <p className={`font-semibold ${getScoreColor(keyword.seo_score || 0)}`}>
-                              {keyword.seo_score || 'N/A'}
+                            <p
+                              className={`font-semibold ${getScoreColor(keyword.seo_score || 0)}`}
+                            >
+                              {keyword.seo_score || "N/A"}
                             </p>
                           </div>
                         </div>
@@ -275,11 +343,14 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
 
                       {/* Informações adicionais */}
                       <div className="flex items-center gap-6 text-xs text-gray-500">
-                        <span>Local: {keyword.location || 'Global'}</span>
-                        <span>Idioma: {keyword.language || 'PT'}</span>
+                        <span>Local: {keyword.location || "Global"}</span>
+                        <span>Idioma: {keyword.language || "PT"}</span>
                         {keyword.last_updated && (
                           <span>
-                            Atualizado: {new Date(keyword.last_updated).toLocaleDateString('pt-BR')}
+                            Atualizado:{" "}
+                            {new Date(keyword.last_updated).toLocaleDateString(
+                              "pt-BR"
+                            )}
                           </span>
                         )}
                       </div>
@@ -298,7 +369,7 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
                           Usar
                         </Button>
                       )}
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -316,5 +387,5 @@ export function KeywordSearchResults({ query, blogId }: KeywordSearchResultsProp
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,100 +1,115 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
-import { 
-  RefreshCw, 
-  Upload, 
-  Download, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  Wifi, 
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import {
+  RefreshCw,
+  Upload,
+  Download,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Wifi,
   WifiOff,
   ArrowUpDown,
   Settings,
-  Clock
-} from 'lucide-react'
-import { useWordPressSync, useWordPressConnection } from '@/hooks/use-wordpress-sync'
-import { Loading } from '@/components/ui/loading'
+  Clock,
+} from "lucide-react";
+import {
+  useWordPressSync,
+  useWordPressConnection,
+} from "@/hooks/use-wordpress-sync";
+import { Loading } from "@/components/ui/loading";
 
 interface WordPressSyncProps {
-  blogId: string
+  blogId: string;
 }
 
 export function WordPressSync({ blogId }: WordPressSyncProps) {
-  const [selectedSyncDirection, setSelectedSyncDirection] = useState<'to-wp' | 'from-wp'>('to-wp')
-  
+  const [selectedSyncDirection, setSelectedSyncDirection] = useState<
+    "to-wp" | "from-wp"
+  >("to-wp");
+
   const {
     syncStatus,
-    syncSettings,
     testConnection,
-    syncAllToWordPress,
-    syncAllFromWordPress,
+    bulkSync,
     isTestingConnection,
-    isSyncingAll,
-  } = useWordPressSync(blogId)
+    isBulkSyncing,
+  } = useWordPressSync(blogId);
 
-  const {
-    connectionStatus,
-    refetchConnection,
-    isConnected,
-    connectionError,
-  } = useWordPressConnection(blogId)
+  const { connectionStatus, refetchConnection, isConnected, connectionError } =
+    useWordPressConnection(blogId);
 
-  const handleTestConnection = () => {
-    testConnection.mutate()
-  }
-
-  const handleSyncAll = () => {
-    if (selectedSyncDirection === 'to-wp') {
-      syncAllToWordPress.mutate()
-    } else {
-      syncAllFromWordPress.mutate()
+  const handleTestConnection = async () => {
+    try {
+      await testConnection();
+    } catch (error) {
+      // Error is handled by the mutation
     }
-  }
+  };
+
+  const handleSyncAll = async () => {
+    try {
+      await bulkSync({
+        direction: selectedSyncDirection === "to-wp" ? "to_wp" : "from_wp",
+      });
+    } catch (error) {
+      // Error is handled by the mutation
+    }
+  };
 
   const getConnectionStatusIcon = () => {
     if (isConnected) {
-      return <Wifi className="h-5 w-5 text-green-600" />
+      return <Wifi className="h-5 w-5 text-green-600" />;
     } else {
-      return <WifiOff className="h-5 w-5 text-red-600" />
+      return <WifiOff className="h-5 w-5 text-red-600" />;
     }
-  }
+  };
 
   const getConnectionStatusBadge = () => {
     if (connectionStatus === undefined) {
-      return <Badge variant="secondary">Verificando...</Badge>
+      return <Badge variant="secondary">Verificando...</Badge>;
     }
-    
+
     if (isConnected) {
-      return <Badge className="bg-green-100 text-green-800">Conectado</Badge>
+      return <Badge className="bg-green-100 text-green-800">Conectado</Badge>;
     } else {
-      return <Badge className="bg-red-100 text-red-800">Desconectado</Badge>
+      return <Badge className="bg-red-100 text-red-800">Desconectado</Badge>;
     }
-  }
+  };
 
   const renderSyncResults = () => {
-    if (!syncStatus.results) return null
+    if (!syncStatus.results) return null;
 
-    const { results } = syncStatus
-    const isSuccess = results.success
-    const icon = isSuccess ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-red-600" />
+    const { results } = syncStatus;
+    const isSuccess = results.success;
+    const icon = isSuccess ? (
+      <CheckCircle className="h-5 w-5 text-green-600" />
+    ) : (
+      <XCircle className="h-5 w-5 text-red-600" />
+    );
 
     return (
-      <Alert className={isSuccess ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+      <Alert
+        className={
+          isSuccess
+            ? "border-green-200 bg-green-50"
+            : "border-red-200 bg-red-50"
+        }
+      >
         <div className="flex items-start gap-3">
           {icon}
           <div className="flex-1">
             <AlertDescription className="font-medium mb-2">
               {results.message}
             </AlertDescription>
-            
+
             {results.details && (
               <div className="space-y-2">
                 <div className="flex gap-4 text-sm">
@@ -107,28 +122,31 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
                     </span>
                   )}
                 </div>
-                
-                {results.details.errorDetails && results.details.errorDetails.length > 0 && (
-                  <div className="mt-3">
-                    <details className="text-sm">
-                      <summary className="cursor-pointer text-red-600 hover:text-red-700">
-                        Ver detalhes dos erros
-                      </summary>
-                      <ul className="mt-2 space-y-1 text-red-600">
-                        {results.details.errorDetails.map((error, index) => (
-                          <li key={index} className="text-xs">• {error}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  </div>
-                )}
+
+                {results.details.errorDetails &&
+                  results.details.errorDetails.length > 0 && (
+                    <div className="mt-3">
+                      <details className="text-sm">
+                        <summary className="cursor-pointer text-red-600 hover:text-red-700">
+                          Ver detalhes dos erros
+                        </summary>
+                        <ul className="mt-2 space-y-1 text-red-600">
+                          {results.details.errorDetails.map((error, index) => (
+                            <li key={index} className="text-xs">
+                              • {error}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    </div>
+                  )}
               </div>
             )}
           </div>
         </div>
       </Alert>
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -147,7 +165,7 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
                 <span className="text-sm text-gray-600">Status:</span>
                 {getConnectionStatusBadge()}
               </div>
-              
+
               {connectionError && (
                 <Alert className="border-red-200 bg-red-50">
                   <AlertCircle className="h-4 w-4" />
@@ -157,17 +175,19 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
                 </Alert>
               )}
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 onClick={() => refetchConnection()}
                 disabled={isTestingConnection}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isTestingConnection ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${isTestingConnection ? "animate-spin" : ""}`}
+                />
                 Verificar
               </Button>
-              
+
               <Button
                 variant="outline"
                 onClick={handleTestConnection}
@@ -196,23 +216,29 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
         <CardContent className="space-y-6">
           {/* Direção da Sincronização */}
           <div>
-            <h4 className="text-sm font-medium mb-3">Direção da Sincronização</h4>
+            <h4 className="text-sm font-medium mb-3">
+              Direção da Sincronização
+            </h4>
             <div className="flex gap-3">
               <Button
-                variant={selectedSyncDirection === 'to-wp' ? 'default' : 'outline'}
-                onClick={() => setSelectedSyncDirection('to-wp')}
+                variant={
+                  selectedSyncDirection === "to-wp" ? "default" : "outline"
+                }
+                onClick={() => setSelectedSyncDirection("to-wp")}
                 className="flex items-center gap-2"
-                disabled={isSyncingAll}
+                disabled={isBulkSyncing}
               >
                 <Upload className="h-4 w-4" />
                 Supabase → WordPress
               </Button>
-              
+
               <Button
-                variant={selectedSyncDirection === 'from-wp' ? 'default' : 'outline'}
-                onClick={() => setSelectedSyncDirection('from-wp')}
+                variant={
+                  selectedSyncDirection === "from-wp" ? "default" : "outline"
+                }
+                onClick={() => setSelectedSyncDirection("from-wp")}
                 className="flex items-center gap-2"
-                disabled={isSyncingAll}
+                disabled={isBulkSyncing}
               >
                 <Download className="h-4 w-4" />
                 WordPress → Supabase
@@ -226,12 +252,16 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
           {syncStatus.isRunning && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Progresso da Sincronização</span>
-                <span className="text-sm text-gray-600">{syncStatus.progress}%</span>
+                <span className="text-sm font-medium">
+                  Progresso da Sincronização
+                </span>
+                <span className="text-sm text-gray-600">
+                  {syncStatus.progress}%
+                </span>
               </div>
-              
+
               <Progress value={syncStatus.progress} className="h-2" />
-              
+
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Clock className="h-4 w-4" />
                 {syncStatus.currentTask}
@@ -246,21 +276,20 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
           <div className="flex items-center gap-3">
             <Button
               onClick={handleSyncAll}
-              disabled={!isConnected || isSyncingAll || syncStatus.isRunning}
+              disabled={!isConnected || isBulkSyncing || syncStatus.isRunning}
               className="flex items-center gap-2"
             >
-              {isSyncingAll ? (
+              {isBulkSyncing ? (
                 <Loading variant="dots" size="sm" />
-              ) : selectedSyncDirection === 'to-wp' ? (
+              ) : selectedSyncDirection === "to-wp" ? (
                 <Upload className="h-4 w-4" />
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              
-              {selectedSyncDirection === 'to-wp' 
-                ? 'Sincronizar Todos para WordPress'
-                : 'Importar Todos do WordPress'
-              }
+
+              {selectedSyncDirection === "to-wp"
+                ? "Sincronizar Todos para WordPress"
+                : "Importar Todos do WordPress"}
             </Button>
 
             {!isConnected && (
@@ -276,15 +305,16 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
           {/* Descrição da Sincronização */}
           <div className="text-sm text-gray-600 space-y-2">
             <p className="font-medium">
-              {selectedSyncDirection === 'to-wp' 
-                ? 'Sincronização Supabase → WordPress:'
-                : 'Importação WordPress → Supabase:'
-              }
+              {selectedSyncDirection === "to-wp"
+                ? "Sincronização Supabase → WordPress:"
+                : "Importação WordPress → Supabase:"}
             </p>
             <ul className="space-y-1 text-xs pl-4">
-              {selectedSyncDirection === 'to-wp' ? (
+              {selectedSyncDirection === "to-wp" ? (
                 <>
-                  <li>• Envia posts marcados para sincronização para o WordPress</li>
+                  <li>
+                    • Envia posts marcados para sincronização para o WordPress
+                  </li>
                   <li>• Atualiza posts existentes ou cria novos</li>
                   <li>• Preserva IDs do WordPress para sincronização futura</li>
                   <li>• Inclui metadados SEO e conteúdo completo</li>
@@ -301,32 +331,6 @@ export function WordPressSync({ blogId }: WordPressSyncProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Configurações de Sincronização Automática */}
-      {syncSettings && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5" />
-              Sincronização Automática
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Status da Sincronização Automática</p>
-                <p className="text-sm text-gray-600">
-                  Sincronizar automaticamente quando posts forem criados ou atualizados
-                </p>
-              </div>
-              
-              <Badge variant={(syncSettings as any).auto_sync_enabled ? 'default' : 'secondary'}>
-                {(syncSettings as any).auto_sync_enabled ? 'Ativada' : 'Desativada'}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
-  )
+  );
 }

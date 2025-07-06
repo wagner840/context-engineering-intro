@@ -1,358 +1,407 @@
-import type { WordPressPost, WordPressCategory, WordPressTag, WordPressMedia } from '@/types/wordpress'
+import type {
+  WordPressPost,
+  WordPressCategory,
+  WordPressTag,
+  WordPressMedia,
+} from "@/types/wordpress";
 
 export class WordPressApiClient {
-  private baseUrl: string
-  private username: string
-  private password: string
+  private baseUrl: string;
+  private username: string;
+  private password: string;
 
   constructor(baseUrl: string, username: string, password: string) {
-    this.baseUrl = baseUrl.replace(/\/$/, '') // Remove trailing slash
-    this.username = username
-    this.password = password
+    this.baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
+    this.username = username;
+    this.password = password;
   }
 
   private getAuthHeaders() {
-    const credentials = btoa(`${this.username}:${this.password}`)
+    const credentials = btoa(`${this.username}:${this.password}`);
     return {
-      'Authorization': `Basic ${credentials}`,
-      'Content-Type': 'application/json',
-    }
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/json",
+    };
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}/wp-json/wp/v2${endpoint}`
-    
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const url = `${this.baseUrl}/wp-json/wp/v2${endpoint}`;
+
     const response = await fetch(url, {
       ...options,
       headers: {
         ...this.getAuthHeaders(),
         ...options.headers,
       },
-    })
+    });
 
     if (!response.ok) {
-      throw new Error(`WordPress API error: ${response.status} ${response.statusText}`)
+      throw new Error(
+        `WordPress API error: ${response.status} ${response.statusText}`
+      );
     }
 
-    return response.json()
+    return response.json();
   }
 
   // Posts
-  async getPosts(params: {
-    per_page?: number
-    page?: number
-    search?: string
-    status?: 'publish' | 'draft' | 'pending' | 'private'
-    categories?: number[]
-    tags?: number[]
-  } = {}): Promise<WordPressPost[]> {
-    const searchParams = new URLSearchParams()
-    
+  async getPosts(
+    params: {
+      per_page?: number;
+      page?: number;
+      search?: string;
+      status?: "publish" | "draft" | "pending" | "private";
+      categories?: number[];
+      tags?: number[];
+    } = {}
+  ): Promise<WordPressPost[]> {
+    const searchParams = new URLSearchParams();
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
         if (Array.isArray(value)) {
-          searchParams.append(key, value.join(','))
+          searchParams.append(key, value.join(","));
         } else {
-          searchParams.append(key, String(value))
+          searchParams.append(key, String(value));
         }
       }
-    })
+    });
 
-    return this.request<WordPressPost[]>(`/posts?${searchParams}`)
+    return this.request<WordPressPost[]>(`/posts?${searchParams}`);
   }
 
   async getPost(id: number): Promise<WordPressPost> {
-    return this.request<WordPressPost>(`/posts/${id}`)
+    return this.request<WordPressPost>(`/posts/${id}`);
   }
 
   async createPost(post: Partial<WordPressPost>): Promise<WordPressPost> {
-    return this.request<WordPressPost>('/posts', {
-      method: 'POST',
+    return this.request<WordPressPost>("/posts", {
+      method: "POST",
       body: JSON.stringify(post),
-    })
+    });
   }
 
-  async updatePost(id: number, post: Partial<WordPressPost>): Promise<WordPressPost> {
+  async updatePost(
+    id: number,
+    post: Partial<WordPressPost>
+  ): Promise<WordPressPost> {
     return this.request<WordPressPost>(`/posts/${id}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(post),
-    })
+    });
   }
 
   async deletePost(id: number, force = false): Promise<WordPressPost> {
     return this.request<WordPressPost>(`/posts/${id}?force=${force}`, {
-      method: 'DELETE',
-    })
+      method: "DELETE",
+    });
   }
 
   // Categories
-  async getCategories(params: {
-    per_page?: number
-    page?: number
-    search?: string
-  } = {}): Promise<WordPressCategory[]> {
-    const searchParams = new URLSearchParams()
-    
+  async getCategories(
+    params: {
+      per_page?: number;
+      page?: number;
+      search?: string;
+    } = {}
+  ): Promise<WordPressCategory[]> {
+    const searchParams = new URLSearchParams();
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
-        searchParams.append(key, String(value))
+        searchParams.append(key, String(value));
       }
-    })
+    });
 
-    return this.request<WordPressCategory[]>(`/categories?${searchParams}`)
+    return this.request<WordPressCategory[]>(`/categories?${searchParams}`);
   }
 
-  async createCategory(category: Partial<WordPressCategory>): Promise<WordPressCategory> {
-    return this.request<WordPressCategory>('/categories', {
-      method: 'POST',
+  async createCategory(
+    category: Partial<WordPressCategory>
+  ): Promise<WordPressCategory> {
+    return this.request<WordPressCategory>("/categories", {
+      method: "POST",
       body: JSON.stringify(category),
-    })
+    });
   }
 
   // Tags
-  async getTags(params: {
-    per_page?: number
-    page?: number
-    search?: string
-  } = {}): Promise<WordPressTag[]> {
-    const searchParams = new URLSearchParams()
-    
+  async getTags(
+    params: {
+      per_page?: number;
+      page?: number;
+      search?: string;
+    } = {}
+  ): Promise<WordPressTag[]> {
+    const searchParams = new URLSearchParams();
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
-        searchParams.append(key, String(value))
+        searchParams.append(key, String(value));
       }
-    })
+    });
 
-    return this.request<WordPressTag[]>(`/tags?${searchParams}`)
+    return this.request<WordPressTag[]>(`/tags?${searchParams}`);
   }
 
   async createTag(tag: Partial<WordPressTag>): Promise<WordPressTag> {
-    return this.request<WordPressTag>('/tags', {
-      method: 'POST',
+    return this.request<WordPressTag>("/tags", {
+      method: "POST",
       body: JSON.stringify(tag),
-    })
+    });
   }
 
   // Media
-  async getMedia(params: {
-    per_page?: number
-    page?: number
-    search?: string
-  } = {}): Promise<WordPressMedia[]> {
-    const searchParams = new URLSearchParams()
-    
+  async getMedia(
+    params: {
+      per_page?: number;
+      page?: number;
+      search?: string;
+    } = {}
+  ): Promise<WordPressMedia[]> {
+    const searchParams = new URLSearchParams();
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
-        searchParams.append(key, String(value))
+        searchParams.append(key, String(value));
       }
-    })
+    });
 
-    return this.request<WordPressMedia[]>(`/media?${searchParams}`)
+    return this.request<WordPressMedia[]>(`/media?${searchParams}`);
   }
 
-  async uploadMedia(file: File, title?: string, altText?: string): Promise<WordPressMedia> {
-    const formData = new FormData()
-    formData.append('file', file)
-    
-    if (title) formData.append('title', title)
-    if (altText) formData.append('alt_text', altText)
+  async uploadMedia(
+    file: File,
+    title?: string,
+    altText?: string
+  ): Promise<WordPressMedia> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    if (title) formData.append("title", title);
+    if (altText) formData.append("alt_text", altText);
 
     const response = await fetch(`${this.baseUrl}/wp-json/wp/v2/media`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Basic ${btoa(`${this.username}:${this.password}`)}`,
+        Authorization: `Basic ${btoa(`${this.username}:${this.password}`)}`,
       },
       body: formData,
-    })
+    });
 
     if (!response.ok) {
-      throw new Error(`WordPress Media upload error: ${response.status} ${response.statusText}`)
+      throw new Error(
+        `WordPress Media upload error: ${response.status} ${response.statusText}`
+      );
     }
 
-    return response.json()
+    return response.json();
   }
 
   // Sync helpers
-  async syncPost(localPost: {
-    title: string
-    content: string
-    excerpt?: string
-    status: string
-    categories?: number[]
-    tags?: number[]
-    featured_media?: number
-    meta?: {
-      seo_title?: string
-      seo_description?: string
-      focus_keyword?: string
-    }
-  }, wordpressPostId?: number): Promise<WordPressPost> {
+  async syncPost(
+    localPost: {
+      title: string;
+      content: string;
+      excerpt?: string;
+      status: string;
+      categories?: number[];
+      tags?: number[];
+      featured_media?: number;
+      meta?: {
+        seo_title?: string;
+        seo_description?: string;
+        focus_keyword?: string;
+      };
+    },
+    wordpressPostId?: number
+  ): Promise<WordPressPost> {
     const wpPost = {
       title: localPost.title,
       content: localPost.content,
-      excerpt: localPost.excerpt || '',
-      status: localPost.status as 'draft' | 'pending' | 'publish' | 'future' | 'private',
+      excerpt: localPost.excerpt || "",
+      status: localPost.status as
+        | "draft"
+        | "pending"
+        | "publish"
+        | "future"
+        | "private",
       categories: localPost.categories || [],
       tags: localPost.tags || [],
       featured_media: localPost.featured_media || 0,
       meta: localPost.meta || {},
-    }
+    };
 
     if (wordpressPostId) {
-      return this.updatePost(wordpressPostId, wpPost as any)
+      return this.updatePost(wordpressPostId, wpPost as any);
     } else {
-      return this.createPost(wpPost as any)
+      return this.createPost(wpPost as any);
     }
   }
 
   async getPostBySlug(slug: string): Promise<WordPressPost | null> {
-    const posts = await this.getPosts({ search: slug, per_page: 1 })
-    return posts.length > 0 ? posts[0] : null
+    const posts = await this.getPosts({ search: slug, per_page: 1 });
+    return posts.length > 0 ? posts[0] : null;
   }
 }
 
 export function createWordPressClient(
-  baseUrl: string, 
-  username: string, 
+  baseUrl: string,
+  username: string,
   password: string
 ): WordPressApiClient {
-  return new WordPressApiClient(baseUrl, username, password)
+  return new WordPressApiClient(baseUrl, username, password);
 }
 
 export const getWordPressClientForBlog = (blog: {
-  domain: string
-  settings: any
+  domain: string;
+  settings: any;
 }): WordPressApiClient => {
   // Try blog-specific settings first
-  const { wordpress_username, wordpress_password } = blog.settings || {}
-  
+  const { wordpress_username, wordpress_password } = blog.settings || {};
+
   if (wordpress_username && wordpress_password) {
     return createWordPressClient(
       `https://${blog.domain}`,
       wordpress_username,
       wordpress_password
-    )
+    );
   }
-  
+
   // Fall back to environment variables based on domain
-  const blogKey = blog.domain.replace(/\./g, '').toUpperCase()
-  const envUsername = process.env[`${blogKey}_WORDPRESS_USERNAME`]
-  const envPassword = process.env[`${blogKey}_WORDPRESS_PASSWORD`]
-  const envUrl = process.env[`${blogKey}_WORDPRESS_URL`]
-  
+  const blogKey = blog.domain.replace(/\./g, "").toUpperCase();
+  const envUsername = process.env[`${blogKey}_WORDPRESS_USERNAME`];
+  const envPassword = process.env[`${blogKey}_WORDPRESS_PASSWORD`];
+  const envUrl = process.env[`${blogKey}_WORDPRESS_URL`];
+
   if (envUsername && envPassword) {
     return createWordPressClient(
       envUrl || `https://${blog.domain}`,
       envUsername,
       envPassword
-    )
+    );
   }
-  
-  throw new Error(`WordPress credentials not configured for blog: ${blog.domain}`)
-}
+
+  throw new Error(
+    `WordPress credentials not configured for blog: ${blog.domain}`
+  );
+};
 
 // Helper function to get WordPress client by domain name
-export const getWordPressClientByDomain = (domain: string): WordPressApiClient => {
+export const getWordPressClientByDomain = (
+  domain: string
+): WordPressApiClient => {
   // Map domain to environment variable prefix
   const domainMap: Record<string, string> = {
-    'einsof7.com': 'EINSOF7',
-    'opetmil.com': 'OPETMIL',
-  }
-  
-  const envPrefix = domainMap[domain]
+    "einsof7.com": "EINSOF7",
+    "Optemil.com": "OPTEMIL",
+  };
+
+  const envPrefix = domainMap[domain];
   if (!envPrefix) {
-    throw new Error(`No WordPress configuration found for domain: ${domain}`)
+    throw new Error(`No WordPress configuration found for domain: ${domain}`);
   }
-  
-  const username = process.env[`${envPrefix}_WORDPRESS_USERNAME`]
-  const password = process.env[`${envPrefix}_WORDPRESS_PASSWORD`]
-  const url = process.env[`${envPrefix}_WORDPRESS_URL`]
-  
+
+  const username = process.env[`${envPrefix}_WORDPRESS_USERNAME`];
+  const password = process.env[`${envPrefix}_WORDPRESS_PASSWORD`];
+  const url = process.env[`${envPrefix}_WORDPRESS_URL`];
+
   if (!username || !password) {
-    throw new Error(`WordPress credentials not configured for domain: ${domain}`)
+    throw new Error(
+      `WordPress credentials not configured for domain: ${domain}`
+    );
   }
-  
+
   return createWordPressClient(
     url || `https://${domain}/wp-json/wp/v2`,
     username,
     password
-  )
-}
+  );
+};
 
 // WordPress API wrapper with configuration
 export class WordPressAPI {
-  private client: WordPressApiClient
+  private client: WordPressApiClient;
 
   constructor(config: {
-    api_url: string
-    username: string
-    app_password: string
+    api_url: string;
+    username: string;
+    app_password: string;
   }) {
-    this.client = new WordPressApiClient(config.api_url, config.username, config.app_password)
+    this.client = new WordPressApiClient(
+      config.api_url,
+      config.username,
+      config.app_password
+    );
   }
 
   // Delegate all methods to the client
   getPosts(options?: any) {
-    return this.client.getPosts(options)
+    return this.client.getPosts(options);
   }
-  
+
   getPost(id: number) {
-    return this.client.getPost(id)
+    return this.client.getPost(id);
   }
-  
+
   createPost(post: any) {
-    return this.client.createPost(post)
+    return this.client.createPost(post);
   }
-  
+
   updatePost(id: number, post: any) {
-    return this.client.updatePost(id, post)
+    return this.client.updatePost(id, post);
   }
-  
+
   deletePost(id: number) {
-    return this.client.deletePost(id)
+    return this.client.deletePost(id);
   }
-  
+
   getCategories() {
-    return this.client.getCategories()
+    return this.client.getCategories();
   }
-  
+
   createCategory(category: any) {
-    return this.client.createCategory(category)
+    return this.client.createCategory(category);
   }
-  
+
   getTags() {
-    return this.client.getTags()
+    return this.client.getTags();
   }
-  
+
   createTag(tag: any) {
-    return this.client.createTag(tag)
+    return this.client.createTag(tag);
   }
-  
+
   getMedia() {
-    return this.client.getMedia()
+    return this.client.getMedia();
   }
-  
+
   uploadMedia(file: any) {
-    return this.client.uploadMedia(file)
+    return this.client.uploadMedia(file);
   }
 }
 
-export const getWordPressClient = async (blogId: string): Promise<WordPressApiClient> => {
+export const getWordPressClient = async (
+  blogId: string
+): Promise<WordPressApiClient> => {
   // Carrega dados do blog via Supabase público
   try {
-    const { createSupabaseClient } = await import('@/lib/supabase') as any
-    const supa = createSupabaseClient()
+    const { createSupabaseClient } = (await import("@/lib/supabase")) as any;
+    const supa = createSupabaseClient();
     const { data: blog, error } = await supa
-      .from('blogs')
-      .select('domain, settings')
-      .eq('id', blogId)
-      .single()
+      .from("blogs")
+      .select("domain, settings")
+      .eq("id", blogId)
+      .single();
     if (error || !blog) {
-      throw new Error('Blog não encontrado')
+      throw new Error("Blog não encontrado");
     }
-    return getWordPressClientForBlog(blog as any)
+    return getWordPressClientForBlog(blog as any);
   } catch (err) {
     // Fallback: tenta usar domínio diretamente
-    return getWordPressClientByDomain(blogId)
+    return getWordPressClientByDomain(blogId);
   }
-}
+};

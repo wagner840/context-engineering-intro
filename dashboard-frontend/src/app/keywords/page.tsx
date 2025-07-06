@@ -45,21 +45,26 @@ import type { KeywordSearchFilters } from "@/types/database";
 export default function KeywordsPage() {
   const [filters, setFilters] = useState<KeywordSearchFilters>({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBlog, setSelectedBlog] = useState<string>('all');
-  const [searchMode, setSearchMode] = useState<'traditional' | 'semantic'>('traditional');
-  const [activeTab, setActiveTab] = useState('search');
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBlog, setSelectedBlog] = useState<string>("all");
+  const [searchMode, setSearchMode] = useState<"traditional" | "semantic">(
+    "traditional"
+  );
+  const [activeTab, setActiveTab] = useState("search");
+
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const { data: blogs } = useBlogs();
+  const blogs = useBlogs();
   const { data: keywordsData, isLoading } = useKeywords(filters);
   const { data: stats } = useKeywordStats(filters.blog_id);
   const markAsUsed = useMarkKeywordAsUsed();
 
   const keywords = keywordsData?.data || [];
 
-  const handleFilterChange = (key: keyof KeywordSearchFilters, value: string | boolean) => {
+  const handleFilterChange = (
+    key: keyof KeywordSearchFilters,
+    value: string | boolean
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -103,7 +108,8 @@ export default function KeywordsPage() {
           Pesquisa de Keywords
         </h1>
         <p className="text-gray-600">
-          Encontre as melhores palavras-chave para seu conteúdo com busca tradicional e semântica
+          Encontre as melhores palavras-chave para seu conteúdo com busca
+          tradicional e semântica
         </p>
       </div>
 
@@ -127,7 +133,7 @@ export default function KeywordsPage() {
                 className="pl-9"
               />
             </div>
-            
+
             {/* Seletor de blog */}
             <Select value={selectedBlog} onValueChange={setSelectedBlog}>
               <SelectTrigger>
@@ -149,18 +155,18 @@ export default function KeywordsPage() {
             <span className="text-sm font-medium">Modo de busca:</span>
             <div className="flex gap-2">
               <Button
-                variant={searchMode === 'traditional' ? 'default' : 'outline'}
+                variant={searchMode === "traditional" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setSearchMode('traditional')}
+                onClick={() => setSearchMode("traditional")}
                 className="flex items-center gap-2"
               >
                 <Target className="h-4 w-4" />
                 Tradicional
               </Button>
               <Button
-                variant={searchMode === 'semantic' ? 'default' : 'outline'}
+                variant={searchMode === "semantic" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setSearchMode('semantic')}
+                onClick={() => setSearchMode("semantic")}
                 className="flex items-center gap-2"
               >
                 <Brain className="h-4 w-4" />
@@ -169,15 +175,17 @@ export default function KeywordsPage() {
             </div>
           </div>
 
-          {searchMode === 'semantic' && (
+          {searchMode === "semantic" && (
             <div className="bg-blue-50 p-4 rounded-lg">
               <div className="flex items-start gap-2">
                 <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900">Busca Semântica com IA</p>
+                  <p className="text-sm font-medium text-blue-900">
+                    Busca Semântica com IA
+                  </p>
                   <p className="text-xs text-blue-700 mt-1">
-                    Use linguagem natural para encontrar keywords relacionadas por significado, 
-                    não apenas por correspondência textual.
+                    Use linguagem natural para encontrar keywords relacionadas
+                    por significado, não apenas por correspondência textual.
                   </p>
                 </div>
               </div>
@@ -187,13 +195,20 @@ export default function KeywordsPage() {
       </Card>
 
       {/* Conteúdo Principal */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Search className="h-4 w-4" />
             Busca
           </TabsTrigger>
-          <TabsTrigger value="opportunities" className="flex items-center gap-2">
+          <TabsTrigger
+            value="opportunities"
+            className="flex items-center gap-2"
+          >
             <TrendingUp className="h-4 w-4" />
             Oportunidades
           </TabsTrigger>
@@ -208,8 +223,8 @@ export default function KeywordsPage() {
         </TabsList>
 
         <TabsContent value="search" className="space-y-6">
-          {searchMode === 'traditional' ? (
-            <KeywordSearchResults 
+          {searchMode === "traditional" ? (
+            <KeywordSearchResults
               query={debouncedSearchQuery}
               blogId={selectedBlog}
             />
@@ -254,7 +269,9 @@ export default function KeywordsPage() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">MSV Médio</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    MSV Médio
+                  </CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -278,20 +295,26 @@ export default function KeywordsPage() {
                   <div className="text-2xl font-bold">
                     {Math.round(stats.avgDifficulty)}
                   </div>
-                  <p className="text-xs text-muted-foreground">Dificuldade SEO</p>
+                  <p className="text-xs text-muted-foreground">
+                    Dificuldade SEO
+                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">CPC Médio</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    CPC Médio
+                  </CardTitle>
                   <Target className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
                     R$ {stats.avgCpc.toFixed(2)}
                   </div>
-                  <p className="text-xs text-muted-foreground">Custo por clique</p>
+                  <p className="text-xs text-muted-foreground">
+                    Custo por clique
+                  </p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -322,7 +345,9 @@ export default function KeywordsPage() {
                 <div className="flex gap-2">
                   <Select
                     value={filters.blog_id || ""}
-                    onValueChange={(value) => handleFilterChange("blog_id", value)}
+                    onValueChange={(value) =>
+                      handleFilterChange("blog_id", value)
+                    }
                   >
                     <SelectTrigger className="w-40">
                       <SelectValue placeholder="Blog" />
@@ -365,10 +390,14 @@ export default function KeywordsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Todas</SelectItem>
-                      <SelectItem value="informational">Informacional</SelectItem>
+                      <SelectItem value="informational">
+                        Informacional
+                      </SelectItem>
                       <SelectItem value="navigational">Navegacional</SelectItem>
                       <SelectItem value="commercial">Comercial</SelectItem>
-                      <SelectItem value="transactional">Transacional</SelectItem>
+                      <SelectItem value="transactional">
+                        Transacional
+                      </SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -445,9 +474,15 @@ export default function KeywordsPage() {
                         </div>
 
                         <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                          <span>MSV: {keyword.msv?.toLocaleString() || "N/A"}</span>
-                          <span>Dificuldade: {keyword.kw_difficulty || "N/A"}</span>
-                          <span>CPC: R$ {keyword.cpc?.toFixed(2) || "N/A"}</span>
+                          <span>
+                            MSV: {keyword.msv?.toLocaleString() || "N/A"}
+                          </span>
+                          <span>
+                            Dificuldade: {keyword.kw_difficulty || "N/A"}
+                          </span>
+                          <span>
+                            CPC: R$ {keyword.cpc?.toFixed(2) || "N/A"}
+                          </span>
                           <span>Local: {keyword.location}</span>
                           <span>Idioma: {keyword.language}</span>
                         </div>

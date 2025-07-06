@@ -1,16 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import type { Views } from "@/types/database";
 
-export interface DashboardCounts {
-  total_blogs: number | null;
-  total_keywords: number | null;
-  total_posts: number | null;
-  total_opportunities: number | null;
-  avg_msv: number | null;
-  avg_difficulty: number | null;
-  avg_cpc: number | null;
-  conversion_rate: number | null;
-}
+export type DashboardCounts = Views<"dashboard_counts">;
 
 export const DASHBOARD_COUNTS_QUERY_KEY = ["dashboard-counts"] as const;
 

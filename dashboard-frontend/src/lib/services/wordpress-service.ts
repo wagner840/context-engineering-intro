@@ -73,7 +73,7 @@ export class WordPressService {
       username: string;
       password: string;
     };
-    opetmil: {
+    Optemil: {
       url: string;
       username: string;
       password: string;
@@ -87,22 +87,22 @@ export class WordPressService {
         username: process.env.EINSOF7_WORDPRESS_USERNAME!,
         password: process.env.EINSOF7_WORDPRESS_PASSWORD!,
       },
-      opetmil: {
-        url: process.env.OPETMIL_WORDPRESS_URL!,
-        username: process.env.OPETMIL_WORDPRESS_USERNAME!,
-        password: process.env.OPETMIL_WORDPRESS_PASSWORD!,
+      Optemil: {
+        url: process.env.OPTEMIL_WORDPRESS_URL!,
+        username: process.env.OPTEMIL_WORDPRESS_USERNAME!,
+        password: process.env.OPTEMIL_WORDPRESS_PASSWORD!,
       },
     };
   }
 
-  private getAuthHeader(blog: "einsof7" | "opetmil"): string {
+  private getAuthHeader(blog: "einsof7" | "Optemil"): string {
     const config = this.blogConfig[blog];
     const credentials = `${config.username}:${config.password}`;
     return `Basic ${Buffer.from(credentials).toString("base64")}`;
   }
 
   private async fetchWordPress(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     endpoint: string,
     options: RequestInit = {}
   ) {
@@ -128,7 +128,7 @@ export class WordPressService {
 
   // Posts
   async getPosts(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     params?: {
       per_page?: number;
       page?: number;
@@ -159,14 +159,14 @@ export class WordPressService {
   }
 
   async getPost(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     id: number
   ): Promise<WordPressPost> {
     return this.fetchWordPress(blog, `/posts/${id}`);
   }
 
   async createPost(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     post: {
       title: string;
       content: string;
@@ -185,7 +185,7 @@ export class WordPressService {
   }
 
   async updatePost(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     id: number,
     updates: Partial<{
       title: string;
@@ -205,7 +205,7 @@ export class WordPressService {
   }
 
   async deletePost(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     id: number,
     force = false
   ): Promise<any> {
@@ -217,7 +217,7 @@ export class WordPressService {
 
   // Categories
   async getCategories(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     params?: {
       per_page?: number;
       page?: number;
@@ -240,7 +240,7 @@ export class WordPressService {
   }
 
   async createCategory(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     category: {
       name: string;
       description?: string;
@@ -256,7 +256,7 @@ export class WordPressService {
 
   // Tags
   async getTags(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     params?: {
       per_page?: number;
       page?: number;
@@ -278,7 +278,7 @@ export class WordPressService {
   }
 
   async createTag(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     tag: {
       name: string;
       description?: string;
@@ -293,7 +293,7 @@ export class WordPressService {
 
   // Media
   async getMedia(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     params?: {
       per_page?: number;
       page?: number;
@@ -316,7 +316,7 @@ export class WordPressService {
   }
 
   async uploadMedia(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     file: File,
     data?: {
       title?: string;
@@ -356,15 +356,15 @@ export class WordPressService {
   }
 
   // Helper to get blog type from domain
-  static getBlogTypeFromDomain(domain: string): "einsof7" | "opetmil" | null {
+  static getBlogTypeFromDomain(domain: string): "einsof7" | "Optemil" | null {
     if (domain.includes("einsof7.com")) return "einsof7";
-    if (domain.includes("opetmil.com")) return "opetmil";
+    if (domain.includes("Optemil.com")) return "Optemil";
     return null;
   }
 
   // Helper to sync post with Supabase
   async syncPostWithSupabase(
-    blog: "einsof7" | "opetmil",
+    blog: "einsof7" | "Optemil",
     wordpressPostId: number,
     supabasePostId: string
   ) {

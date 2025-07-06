@@ -1,18 +1,23 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Progress } from '@/components/ui/progress'
-import { 
-  FileText, 
-  Plus, 
-  Search, 
- 
+import { useState } from "react";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import {
+  FileText,
+  Plus,
+  Search,
   Edit,
   Calendar,
   Clock,
@@ -26,64 +31,64 @@ import {
   Globe,
   CheckCircle,
   XCircle,
-  AlertCircle
-} from 'lucide-react'
+  AlertCircle,
+} from "lucide-react";
 
 // Mock data for demonstration
 const contentData = {
   posts: [
     {
       id: 1,
-      title: 'Como Implementar SEO Técnico em 2024',
-      status: 'published',
+      title: "Como Implementar SEO Técnico em 2024",
+      status: "published",
       wordCount: 2847,
       readingTime: 12,
       seoScore: 85,
-      publishDate: '2024-01-15',
-      author: 'AI Assistant',
-      blog: 'Einsof7',
+      publishDate: "2024-01-15",
+      author: "AI Assistant",
+      blog: "Einsof7",
       views: 1247,
-      keywords: ['seo técnico', 'otimização', 'performance']
+      keywords: ["seo técnico", "otimização", "performance"],
     },
     {
       id: 2,
-      title: 'Guia Completo de Keyword Research',
-      status: 'draft',
+      title: "Guia Completo de Keyword Research",
+      status: "draft",
       wordCount: 1923,
       readingTime: 8,
       seoScore: 72,
       publishDate: null,
-      author: 'Content Team',
-      blog: 'Opetmil',
+      author: "Content Team",
+      blog: "Optemil",
       views: 0,
-      keywords: ['keyword research', 'pesquisa', 'seo']
+      keywords: ["keyword research", "pesquisa", "seo"],
     },
     {
       id: 3,
-      title: 'Automação de Conteúdo com IA',
-      status: 'scheduled',
+      title: "Automação de Conteúdo com IA",
+      status: "scheduled",
       wordCount: 3156,
       readingTime: 14,
       seoScore: 91,
-      publishDate: '2024-01-20',
-      author: 'AI Assistant',
-      blog: 'Einsof7',
+      publishDate: "2024-01-20",
+      author: "AI Assistant",
+      blog: "Einsof7",
       views: 0,
-      keywords: ['automação', 'ia', 'conteúdo']
+      keywords: ["automação", "ia", "conteúdo"],
     },
     {
       id: 4,
-      title: 'Análise de Competidores no SEO',
-      status: 'review',
+      title: "Análise de Competidores no SEO",
+      status: "review",
       wordCount: 2134,
       readingTime: 9,
       seoScore: 78,
       publishDate: null,
-      author: 'Content Team',
-      blog: 'Opetmil',
+      author: "Content Team",
+      blog: "Optemil",
       views: 0,
-      keywords: ['competidores', 'análise', 'seo']
-    }
+      keywords: ["competidores", "análise", "seo"],
+    },
   ],
   stats: {
     totalPosts: 127,
@@ -93,80 +98,98 @@ const contentData = {
     reviewPosts: 7,
     totalWords: 256890,
     avgSeoScore: 82,
-    monthlyViews: 45230
-  }
-}
+    monthlyViews: 45230,
+  },
+};
 
 const opportunities = [
   {
     id: 1,
-    title: 'Otimização de Core Web Vitals',
-    priority: 'high',
+    title: "Otimização de Core Web Vitals",
+    priority: "high",
     estimatedTraffic: 2500,
     difficulty: 65,
-    keywords: ['core web vitals', 'performance', 'seo técnico'],
-    blog: 'Einsof7'
+    keywords: ["core web vitals", "performance", "seo técnico"],
+    blog: "Einsof7",
   },
   {
     id: 2,
-    title: 'Schema Markup para E-commerce',
-    priority: 'medium',
+    title: "Schema Markup para E-commerce",
+    priority: "medium",
     estimatedTraffic: 1800,
     difficulty: 72,
-    keywords: ['schema markup', 'ecommerce', 'estruturados'],
-    blog: 'Opetmil'
+    keywords: ["schema markup", "ecommerce", "estruturados"],
+    blog: "Optemil",
   },
   {
     id: 3,
-    title: 'Link Building Estratégias 2024',
-    priority: 'high',
+    title: "Link Building Estratégias 2024",
+    priority: "high",
     estimatedTraffic: 3200,
     difficulty: 78,
-    keywords: ['link building', 'backlinks', 'autoridade'],
-    blog: 'Einsof7'
-  }
-]
+    keywords: ["link building", "backlinks", "autoridade"],
+    blog: "Einsof7",
+  },
+];
 
 export default function ContentPage() {
-  const [activeTab, setActiveTab] = useState('posts')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('all')
+  const [activeTab, setActiveTab] = useState("posts");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'published': return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'draft': return <Edit className="h-4 w-4 text-gray-500" />
-      case 'scheduled': return <Clock className="h-4 w-4 text-blue-500" />
-      case 'review': return <AlertCircle className="h-4 w-4 text-yellow-500" />
-      default: return <XCircle className="h-4 w-4 text-red-500" />
+      case "published":
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "draft":
+        return <Edit className="h-4 w-4 text-gray-500" />;
+      case "scheduled":
+        return <Clock className="h-4 w-4 text-blue-500" />;
+      case "review":
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      default:
+        return <XCircle className="h-4 w-4 text-red-500" />;
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'published': return 'bg-green-100 text-green-800'
-      case 'draft': return 'bg-gray-100 text-gray-800'
-      case 'scheduled': return 'bg-blue-100 text-blue-800'
-      case 'review': return 'bg-yellow-100 text-yellow-800'
-      default: return 'bg-red-100 text-red-800'
+      case "published":
+        return "bg-green-100 text-green-800";
+      case "draft":
+        return "bg-gray-100 text-gray-800";
+      case "scheduled":
+        return "bg-blue-100 text-blue-800";
+      case "review":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-red-100 text-red-800";
     }
-  }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case "high":
+        return "bg-red-100 text-red-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "low":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
-  const filteredPosts = contentData.posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesStatus = selectedStatus === 'all' || post.status === selectedStatus
-    return matchesSearch && matchesStatus
-  })
+  const filteredPosts = contentData.posts.filter((post) => {
+    const matchesSearch =
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.keywords.some((k) =>
+        k.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    const matchesStatus =
+      selectedStatus === "all" || post.status === selectedStatus;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -176,7 +199,9 @@ export default function ContentPage() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <FileText className="h-8 w-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Gestão de Conteúdo</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Gestão de Conteúdo
+              </h1>
             </div>
             <p className="text-gray-600">
               Gerencie todo seu conteúdo, posts e oportunidades de SEO
@@ -211,7 +236,9 @@ export default function ContentPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{contentData.stats.totalPosts}</div>
+            <div className="text-2xl font-bold">
+              {contentData.stats.totalPosts}
+            </div>
             <div className="text-xs text-gray-600 mt-1">
               {contentData.stats.publishedPosts} publicados
             </div>
@@ -226,10 +253,10 @@ export default function ContentPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{contentData.stats.avgSeoScore}</div>
-            <div className="text-xs text-gray-600 mt-1">
-              Meta: 85+
+            <div className="text-2xl font-bold">
+              {contentData.stats.avgSeoScore}
             </div>
+            <div className="text-xs text-gray-600 mt-1">Meta: 85+</div>
           </CardContent>
         </Card>
 
@@ -261,21 +288,26 @@ export default function ContentPage() {
             <div className="text-2xl font-bold">
               {(contentData.stats.monthlyViews / 1000).toFixed(0)}k
             </div>
-            <div className="text-xs text-gray-600 mt-1">
-              Últimos 30 dias
-            </div>
+            <div className="text-xs text-gray-600 mt-1">Últimos 30 dias</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="posts" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Posts
           </TabsTrigger>
-          <TabsTrigger value="opportunities" className="flex items-center gap-2">
+          <TabsTrigger
+            value="opportunities"
+            className="flex items-center gap-2"
+          >
             <Target className="h-4 w-4" />
             Oportunidades
           </TabsTrigger>
@@ -322,10 +354,14 @@ export default function ContentPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-gray-900">{post.title}</h3>
+                          <h3 className="font-semibold text-gray-900">
+                            {post.title}
+                          </h3>
                           <Badge className={getStatusColor(post.status)}>
                             {getStatusIcon(post.status)}
-                            <span className="ml-1 capitalize">{post.status}</span>
+                            <span className="ml-1 capitalize">
+                              {post.status}
+                            </span>
                           </Badge>
                         </div>
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
@@ -366,10 +402,14 @@ export default function ContentPage() {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-wrap gap-1 mb-3">
                       {post.keywords.map((keyword, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-xs"
+                        >
                           {keyword}
                         </Badge>
                       ))}
@@ -378,8 +418,11 @@ export default function ContentPage() {
                     {post.publishDate && (
                       <div className="text-xs text-gray-500">
                         <Calendar className="h-3 w-3 inline mr-1" />
-                        {post.status === 'published' ? 'Publicado em' : 'Agendado para'}: {' '}
-                        {new Date(post.publishDate).toLocaleDateString('pt-BR')}
+                        {post.status === "published"
+                          ? "Publicado em"
+                          : "Agendado para"}
+                        :{" "}
+                        {new Date(post.publishDate).toLocaleDateString("pt-BR")}
                       </div>
                     )}
                   </div>
@@ -405,8 +448,12 @@ export default function ContentPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-gray-900">{opportunity.title}</h3>
-                          <Badge className={getPriorityColor(opportunity.priority)}>
+                          <h3 className="font-semibold text-gray-900">
+                            {opportunity.title}
+                          </h3>
+                          <Badge
+                            className={getPriorityColor(opportunity.priority)}
+                          >
                             {opportunity.priority}
                           </Badge>
                         </div>
@@ -424,10 +471,14 @@ export default function ContentPage() {
                             {opportunity.blog}
                           </span>
                         </div>
-                        
+
                         <div className="flex flex-wrap gap-1">
                           {opportunity.keywords.map((keyword, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {keyword}
                             </Badge>
                           ))}
@@ -503,21 +554,34 @@ export default function ContentPage() {
                       {contentData.stats.avgSeoScore}%
                     </div>
                     <div className="text-sm text-gray-600">Score SEO Médio</div>
-                    <Progress value={contentData.stats.avgSeoScore} className="mt-2" />
+                    <Progress
+                      value={contentData.stats.avgSeoScore}
+                      className="mt-2"
+                    />
                   </div>
-                  
+
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600 mb-1">
-                      {Math.round(contentData.stats.totalWords / contentData.stats.publishedPosts)}
+                      {Math.round(
+                        contentData.stats.totalWords /
+                          contentData.stats.publishedPosts
+                      )}
                     </div>
-                    <div className="text-sm text-gray-600">Palavras por post (média)</div>
+                    <div className="text-sm text-gray-600">
+                      Palavras por post (média)
+                    </div>
                   </div>
-                  
+
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600 mb-1">
-                      {Math.round(contentData.stats.monthlyViews / contentData.stats.publishedPosts)}
+                      {Math.round(
+                        contentData.stats.monthlyViews /
+                          contentData.stats.publishedPosts
+                      )}
                     </div>
-                    <div className="text-sm text-gray-600">Views por post (média)</div>
+                    <div className="text-sm text-gray-600">
+                      Views por post (média)
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -526,5 +590,5 @@ export default function ContentPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

@@ -7,46 +7,32 @@ import type {
   DatabaseUpdate,
 } from "@/types/database";
 import { toast } from "sonner";
+import { useBlog as useBlogContext } from "@/contexts/blog-context";
 
 export function useBlogs() {
-  return useQuery({
-    queryKey: ["blogs"],
-    queryFn: async (): Promise<Blog[]> => {
-      const { data, error } = await supabase
-        .from("blogs")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  const { activeBlog, blogs } = useBlogContext();
+  if (activeBlog === "all") return blogs;
+  if (activeBlog) return blogs.filter((b: any) => b.id === activeBlog.id);
+  return blogs;
 }
 
 export function useBlog(id: string) {
   return useQuery({
     queryKey: ["blog", id],
-    queryFn: async (): Promise<BlogWithKeywords> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("blogs")
         .select(
           `
           *,
-          keywords:main_keywords(*),
-          posts:content_posts(
-            id,
-            title,
-            status,
-            created_at,
-            author:authors(name)
-          )
+          main_keywords:main_keywords(*)
         `
         )
         .eq("id", id)
         .single();
 
       if (error) throw error;
-      return data;
+      return data as BlogWithKeywords;
     },
     enabled: !!id,
   });
@@ -56,7 +42,7 @@ export function useCreateBlog() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (blog: DatabaseInsert<Blog>) => {
+    mutationFn: async (blog: DatabaseInsert<"blogs">) => {
       const { data, error } = await supabase
         .from("blogs")
         .insert(blog)
@@ -64,11 +50,14 @@ export function useCreateBlog() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Blog;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
       toast.success("Blog criado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar blog: ${error.message}`);
     },
   });
 }
@@ -79,22 +68,25 @@ export function useUpdateBlog() {
   return useMutation({
     mutationFn: async ({
       id,
-      ...updates
-    }: DatabaseUpdate<Blog> & { id: string }) => {
+      ...blog
+    }: DatabaseUpdate<"blogs"> & { id: string }) => {
       const { data, error } = await supabase
         .from("blogs")
-        .update(updates)
+        .update(blog)
         .eq("id", id)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Blog;
     },
-    onSuccess: (data) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
-      queryClient.invalidateQueries({ queryKey: ["blog", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["blog", variables.id] });
       toast.success("Blog atualizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar blog: ${error.message}`);
     },
   });
 }
@@ -110,7 +102,10 @@ export function useDeleteBlog() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
-      toast.success("Blog removido com sucesso!");
+      toast.success("Blog excluído com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir blog: ${error.message}`);
     },
   });
 }
@@ -129,8 +124,8 @@ export function useBlogStats(blogId: string) {
           .select("id, status", { count: "exact" })
           .eq("blog_id", blogId),
         supabase
-          .from("content_opportunities_clusters")
-          .select("id, status", { count: "exact" })
+          .from("keyword_clusters")
+          .select("id", { count: "exact" })
           .eq("blog_id", blogId),
       ]);
 
@@ -140,16 +135,12 @@ export function useBlogStats(blogId: string) {
 
       const publishedPosts =
         postsRes.data?.filter((p) => p.status === "published").length || 0;
-      const pendingOpportunities =
-        opportunitiesRes.data?.filter((o) => o.status === "identified")
-          .length || 0;
 
       return {
         totalKeywords: keywordsRes.count || 0,
         totalPosts: postsRes.count || 0,
         publishedPosts,
         totalOpportunities: opportunitiesRes.count || 0,
-        pendingOpportunities,
       };
     },
     enabled: !!blogId,

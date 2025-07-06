@@ -46,7 +46,19 @@ export function useContentPost(id: string) {
         .eq("id", id)
         .single();
       if (error) throw error;
-      return data as unknown as PostWithMeta;
+
+      // Construir o objeto PostWithMeta com os metadados
+      const post = data as ContentPost;
+      return {
+        ...post,
+        meta: {
+          seo_score: post.seo_score || undefined,
+          reading_time: post.reading_time || undefined,
+          word_count: post.word_count || undefined,
+          meta_title: post.meta_title || undefined,
+          meta_description: post.meta_description || undefined,
+        },
+      };
     },
     enabled: !!id,
   });
@@ -82,7 +94,9 @@ export function useProductionPipeline(blogId?: string) {
   return useQuery({
     queryKey: CONTENT_QUERY_KEYS.pipeline(blogId),
     queryFn: async () => {
-      let query = supabase.from("production_pipeline").select("*");
+      let query = supabase
+        .from("vw_content_opportunities_with_keywords")
+        .select("*");
       if (blogId) query = query.eq("blog_id", blogId);
       const { data, error } = await query;
       if (error) throw error;
@@ -102,14 +116,14 @@ const useInvalidateContent = () => {
 export function useCreateContentPost() {
   const invalidate = useInvalidateContent();
   return useMutation({
-    mutationFn: async (payload: DatabaseInsert<ContentPost>) => {
+    mutationFn: async (payload: DatabaseInsert<"content_posts">) => {
       const { data, error } = await supabase
         .from("content_posts")
         .insert(payload)
         .select()
         .single();
       if (error) throw error;
-      return data;
+      return data as ContentPost;
     },
     onSuccess: () => {
       invalidate();
