@@ -108,15 +108,21 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Calculate opportunity score if we have the required data
+    // Calculate opportunity score if we have the required data (function disabled)
     let opportunityScore = null
     if (validatedData.search_volume && validatedData.keyword_difficulty && validatedData.cpc) {
-      const { data: score } = await supabase.rpc('calculate_keyword_opportunity_score', {
-        msv: validatedData.search_volume,
-        kw_difficulty: validatedData.keyword_difficulty,
-        cpc: validatedData.cpc,
-      })
-      opportunityScore = score
+      // const { data: score } = await supabase.rpc('calculate_keyword_opportunity_score', {
+      //   msv: validatedData.search_volume,
+      //   kw_difficulty: validatedData.keyword_difficulty,
+      //   cpc: validatedData.cpc,
+      // })
+      // opportunityScore = score
+      
+      // Calculate basic opportunity score manually
+      const volume = validatedData.search_volume
+      const difficulty = validatedData.keyword_difficulty
+      const cpc = validatedData.cpc
+      opportunityScore = Math.round((volume * cpc) / (difficulty + 1) * 100) / 100
     }
     
     // Insert main keyword
@@ -140,9 +146,9 @@ export async function POST(request: NextRequest) {
     if (validatedData.variations && validatedData.variations.length > 0) {
       const variations = validatedData.variations.map((variation) => ({
         main_keyword_id: keyword.id,
-        variation,
-        search_volume: null,
-        difficulty: null,
+        keyword: variation,
+        msv: null,
+        kw_difficulty: null,
         created_at: new Date().toISOString(),
       }))
       

@@ -241,11 +241,10 @@ export function useSemanticKeywordSearch() {
       const { embedding } = await embeddingResponse.json();
 
       // Then use Supabase function for similarity search
-      const { data, error } = await supabase.rpc("find_similar_keywords", {
-        query_embedding: embedding,
+      const { data, error } = await supabase.rpc("match_keywords_semantic", {
+        query_embedding: JSON.stringify(embedding),
         match_threshold: request.similarity_threshold || 0.5,
         match_count: request.limit || 10,
-        blog_id: request.filters?.blog_id,
       });
 
       if (error) throw error;

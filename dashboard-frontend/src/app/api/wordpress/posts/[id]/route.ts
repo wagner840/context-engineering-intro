@@ -29,7 +29,7 @@ export async function GET(
       .select(`
         *,
         blogs!inner (
-          wordpress_config
+          settings
         )
       `)
       .eq('id', params.id)
@@ -40,11 +40,11 @@ export async function GET(
     }
     
     // Get WordPress data if available
-    if (post.wordpress_id && post.blogs.wordpress_config) {
-      const wp = new WordPressAPI(post.blogs.wordpress_config)
+    if (post.wordpress_post_id && post.blogs.settings) {
+      const wp = new WordPressAPI(post.blogs.settings as any)
       
       try {
-        const wpPost = await wp.getPost(post.wordpress_id)
+        const wpPost = await wp.getPost(post.wordpress_post_id)
         return NextResponse.json({ 
           data: { 
             ...post, 
@@ -85,7 +85,7 @@ export async function PUT(
       .select(`
         *,
         blogs!inner (
-          wordpress_config
+          settings
         )
       `)
       .eq('id', params.id)
@@ -96,11 +96,11 @@ export async function PUT(
     }
     
     // Update WordPress post if it exists
-    if (currentPost.wordpress_id && currentPost.blogs.wordpress_config) {
-      const wp = new WordPressAPI(currentPost.blogs.wordpress_config)
+    if (currentPost.wordpress_post_id && currentPost.blogs.settings) {
+      const wp = new WordPressAPI(currentPost.blogs.settings as any)
       
       try {
-        await wp.updatePost(currentPost.wordpress_id, {
+        await wp.updatePost(currentPost.wordpress_post_id, {
           title: validatedData.title,
           content: validatedData.content,
           excerpt: validatedData.excerpt,
@@ -175,7 +175,7 @@ export async function DELETE(
       .select(`
         *,
         blogs!inner (
-          wordpress_config
+          settings
         )
       `)
       .eq('id', params.id)
@@ -186,11 +186,11 @@ export async function DELETE(
     }
     
     // Delete from WordPress if exists
-    if (post.wordpress_id && post.blogs.wordpress_config) {
-      const wp = new WordPressAPI(post.blogs.wordpress_config)
+    if (post.wordpress_post_id && post.blogs.settings) {
+      const wp = new WordPressAPI(post.blogs.settings as any)
       
       try {
-        await wp.deletePost(post.wordpress_id)
+        await wp.deletePost(post.wordpress_post_id)
       } catch (wpError) {
         // Continue with database deletion even if WordPress deletion fails
         console.error('WordPress deletion failed:', wpError)

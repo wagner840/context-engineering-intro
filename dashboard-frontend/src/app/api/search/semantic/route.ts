@@ -55,10 +55,9 @@ export async function POST(request: NextRequest) {
     // Perform vector similarity search using Supabase pgvector
     const { data: keywordMatches, error } = await supabase
       .rpc('match_keywords_semantic', {
-        query_embedding: queryEmbedding,
-        similarity_threshold: validatedData.similarity_threshold,
+        query_embedding: JSON.stringify(queryEmbedding),
+        match_threshold: validatedData.similarity_threshold,
         match_count: validatedData.limit,
-        target_blog_id: validatedData.blog_id,
       })
     
     if (error) {
@@ -99,11 +98,11 @@ export async function POST(request: NextRequest) {
     }
     
     const enhancedResults = await Promise.all(
-      (keywordMatches || []).map(async (match: { keyword: string, search_intent: string, similarity: number, msv: number, competition: string }) => {
+      (keywordMatches || []).map(async (match: { id: string, keyword: string, similarity: number }) => {
         // Generate content suggestions based on the keyword and search intent
         const contentSuggestions = generateContentSuggestions(
           match.keyword, 
-          match.search_intent || 'informational'
+          'informational'
         )
         
         // Extract related topics from the keyword context
@@ -112,10 +111,10 @@ export async function POST(request: NextRequest) {
         return {
           keyword: match.keyword,
           similarity: match.similarity || 0.8,
-          relevance_score: calculateRelevanceScore(match, validatedData.query),
-          search_volume: match.msv,
-          competition: match.competition,
-          search_intent: match.search_intent,
+          relevance_score: calculateRelevanceScore({ similarity: match.similarity, keyword: match.keyword, msv: 0 }, validatedData.query),
+          search_volume: null,
+          competition: null,
+          search_intent: 'informational',
           related_topics: relatedTopics,
           content_suggestions: contentSuggestions,
         }

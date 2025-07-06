@@ -49,11 +49,11 @@ export default function PostsPage() {
       const { data, error } = await supabase
         .from('content_posts')
         .select('*')
-        .eq('blog_id', blogId)
+        .eq('blog_id', Array.isArray(blogId) ? blogId[0] : blogId)
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setPosts(data || [])
+      setPosts((data || []) as any)
     } catch (err) {
       console.error('Erro ao carregar posts:', err)
     } finally {

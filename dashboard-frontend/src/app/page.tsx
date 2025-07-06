@@ -16,11 +16,9 @@ import {
   Globe,
   Zap,
   Activity,
-  BarChart3,
   FileText,
   Target,
   TrendingUp,
-  Clock,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { BlogService } from "@/lib/services/blog-service";

@@ -21,13 +21,16 @@ import {
   Globe,
   Target,
   BarChart3,
-  ExternalLink
+  ExternalLink,
+  RotateCcw
 } from 'lucide-react'
 import { N8nWorkflowManager } from '@/components/automation/n8n-workflow-manager'
 import { AutomationTemplates } from '@/components/automation/automation-templates'
 import { WorkflowExecutions } from '@/components/automation/workflow-executions'
 import { TriggerManager } from '@/components/automation/trigger-manager';
 import { IntegrationSettings } from '@/components/automation/integration-settings';
+import { WordPressSyncManager } from '@/components/sync/wordpress-sync-manager'
+import { SyncWorkflowManager } from '@/components/automation/sync-workflow-manager'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 
@@ -286,10 +289,14 @@ export default function AutomationPage() {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex items-center justify-between">
-          <TabsList className="grid w-full max-w-4xl grid-cols-6">
+          <TabsList className="grid w-full max-w-5xl grid-cols-7">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Visão Geral
+            </TabsTrigger>
+            <TabsTrigger value="sync" className="flex items-center gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Sincronização
             </TabsTrigger>
             <TabsTrigger value="workflows" className="flex items-center gap-2">
               <Zap className="h-4 w-4" />
@@ -408,6 +415,13 @@ export default function AutomationPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sync">
+          <div className="space-y-6">
+            <WordPressSyncManager />
+            <SyncWorkflowManager />
           </div>
         </TabsContent>
 

@@ -37,18 +37,18 @@ export async function GET(request: NextRequest) {
     // Get blog configuration
     const { data: blog, error: blogError } = await supabase
       .from('blogs')
-      .select('wordpress_config')
+      .select('settings')
       .eq('id', blogId)
       .single()
     
-    if (blogError || !blog?.wordpress_config) {
+    if (blogError || !blog?.settings) {
       return NextResponse.json(
         { error: 'Blog or WordPress configuration not found' },
         { status: 404 }
       )
     }
     
-    const wp = new WordPressAPI(blog.wordpress_config)
+    const wp = new WordPressAPI(blog.settings as any)
     
     try {
       const posts = await wp.getPosts({
@@ -82,18 +82,18 @@ export async function POST(request: NextRequest) {
     // Get blog configuration
     const { data: blog, error: blogError } = await supabase
       .from('blogs')
-      .select('wordpress_config')
+      .select('settings')
       .eq('id', validatedData.blog_id)
       .single()
     
-    if (blogError || !blog?.wordpress_config) {
+    if (blogError || !blog?.settings) {
       return NextResponse.json(
         { error: 'Blog or WordPress configuration not found' },
         { status: 404 }
       )
     }
     
-    const wp = new WordPressAPI(blog.wordpress_config)
+    const wp = new WordPressAPI(blog.settings as any)
     
     try {
       // Create post in WordPress

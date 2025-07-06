@@ -1,0 +1,35 @@
+🚀 Iniciando análise do schema Supabase...
+
+✅ Conexão com Supabase estabelecida
+
+🔍 Analisando tabelas existentes...
+⚠️ RPC execute_sql não disponível, usando método alternativo...
+📊 Encontradas 19 tabelas/views
+
+⚙️ Analisando functions/stored procedures...
+⚙️ Encontradas 6 functions
+
+🔄 Validando integrações no código...
+⚠️  Tabelas usadas no código mas não encontradas no banco:
+   - content_opportunities_categories
+   - content_opportunities_clusters
+   - production_pipeline
+   - serp_results
+ℹ️  Tabelas no banco não usadas no código:
+   - post_tags
+   - executive_dashboard
+   - keyword_opportunities
+   - categorized_keywords
+   - blog_categories_usage
+   - keyword_clustering_metrics
+   - vw_content_opportunities_with_keywords
+📝 Gerando tipos TypeScript...
+
+📝 Tipos TypeScript gerados com sucesso!
+💾 Para salvar os tipos, execute:
+   node scripts/sync-supabase-types.js > src/types/database-generated.ts
+
+📋 RESUMO:
+   • 13 tabelas
+   • 6 views
+   • 6 functions

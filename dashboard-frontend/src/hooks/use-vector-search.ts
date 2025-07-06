@@ -226,7 +226,7 @@ export function useEmbeddingStats(blogId: string) {
 export function useAdvancedVectorSearch() {
   return useMutation({
     mutationFn: async (params: VectorSearchParams): Promise<VectorSearchResult[]> => {
-      const { query, blogId, similarityThreshold, maxResults } = params
+      const { query, similarityThreshold, maxResults } = params
       
       // First, get the embedding for the search query
       const { data: embedding, error: embeddingError } = await supabase.functions.invoke('generate-embedding', {
@@ -235,11 +235,10 @@ export function useAdvancedVectorSearch() {
       
       if (embeddingError) throw embeddingError
       
-      // Perform vector similarity search
-      const { data, error } = await supabase.rpc('vector_search_keywords', {
-        query_embedding: embedding,
-        blog_id_param: blogId,
-        similarity_threshold: similarityThreshold,
+      // Usar match_keywords_semantic que existe
+      const { data, error } = await supabase.rpc('match_keywords_semantic', {
+        query_embedding: JSON.stringify(embedding),
+        match_threshold: similarityThreshold,
         match_count: maxResults
       })
       
@@ -295,13 +294,19 @@ export function useKeywordSimilarity(keyword1: string, keyword2: string) {
   return useQuery({
     queryKey: ['keyword-similarity', keyword1, keyword2],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('calculate_keyword_similarity', {
-        keyword_1: keyword1,
-        keyword_2: keyword2
-      })
+      // Implementação simples de similaridade baseada em palavras
+      if (!keyword1 || !keyword2) return 0
       
-      if (error) throw error
-      return data as number
+      const words1 = keyword1.toLowerCase().split(/\s+/)
+      const words2 = keyword2.toLowerCase().split(/\s+/)
+      
+      const commonWords = words1.filter(word => words2.includes(word))
+      const totalWords = new Set([...words1, ...words2]).size
+      
+      // Jaccard similarity
+      const similarity = commonWords.length / totalWords
+      
+      return Math.round(similarity * 100) / 100 // Round to 2 decimal places
     },
     enabled: !!keyword1 && !!keyword2,
   })

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNotifications } from '@/store/ui-store'
 import { supabase } from '@/lib/supabase'
 import { getWordPressClient } from '@/lib/wordpress'
+import { useBlog } from '@/contexts/blog-context'
 
 export interface SyncResult {
   success: boolean
@@ -23,7 +24,10 @@ export interface SyncStatus {
   results?: SyncResult
 }
 
-export function useWordPressSync(blogId: string) {
+export function useWordPressSync(blogId?: string) {
+  const { activeBlog } = useBlog()
+  const currentBlogId = blogId || (activeBlog && activeBlog !== 'all' ? activeBlog.id : '')
+  
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     isRunning: false,
     progress: 0,
@@ -32,6 +36,167 @@ export function useWordPressSync(blogId: string) {
 
   const queryClient = useQueryClient()
   const { addNotification } = useNotifications()
+
+  // Fetch sync logs using the new API
+  const { 
+    data: syncLogs = [], 
+    isLoading: logsLoading, 
+    error: logsError,
+    refetch: refetchLogs 
+  } = useQuery({
+    queryKey: ['sync-logs', currentBlogId],
+    queryFn: async () => {
+      if (!currentBlogId) return []
+      
+      const response = await fetch(`/api/sync/logs?blog_id=${currentBlogId}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch sync logs')
+      }
+      return response.json()
+    },
+    enabled: !!currentBlogId,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  })
+
+  // Enhanced sync mutations using the new API
+  const syncFromWordPressMutation = useMutation({
+    mutationFn: async (options?: { postId?: string }) => {
+      if (!currentBlogId) throw new Error('No blog selected')
+
+      const response = await fetch('/api/sync/wordpress-to-supabase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blogId: currentBlogId,
+          direction: 'wp_to_supabase',
+          postId: options?.postId
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Sync failed')
+      }
+
+      return response.json()
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['sync-logs'] })
+      queryClient.invalidateQueries({ queryKey: ['blog-posts'] })
+      queryClient.invalidateQueries({ queryKey: ['blog-stats'] })
+      
+      addNotification({
+        type: 'success',
+        title: 'WordPress Import',
+        message: data.message,
+      })
+    },
+    onError: (error) => {
+      addNotification({
+        type: 'error',
+        title: 'Import Failed',
+        message: error.message,
+      })
+    }
+  })
+
+  const syncToWordPressMutation = useMutation({
+    mutationFn: async (options?: { postId?: string }) => {
+      if (!currentBlogId) throw new Error('No blog selected')
+
+      const response = await fetch('/api/sync/wordpress-to-supabase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blogId: currentBlogId,
+          direction: 'supabase_to_wp',
+          postId: options?.postId
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Sync failed')
+      }
+
+      return response.json()
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['sync-logs'] })
+      queryClient.invalidateQueries({ queryKey: ['blog-posts'] })
+      queryClient.invalidateQueries({ queryKey: ['blog-stats'] })
+      
+      addNotification({
+        type: 'success',
+        title: 'WordPress Export',
+        message: data.message,
+      })
+    },
+    onError: (error) => {
+      addNotification({
+        type: 'error',
+        title: 'Export Failed',
+        message: error.message,
+      })
+    }
+  })
+
+  // Enhanced sync functions
+  const syncFromWordPress = useCallback(async (postId?: string) => {
+    return syncFromWordPressMutation.mutateAsync({ postId })
+  }, [syncFromWordPressMutation])
+
+  const syncToWordPress = useCallback(async (postId?: string) => {
+    return syncToWordPressMutation.mutateAsync({ postId })
+  }, [syncToWordPressMutation])
+
+  // Get sync status
+  const getSyncStatus = useCallback(() => {
+    if (!syncLogs || syncLogs.length === 0) return null
+
+    const lastSync = syncLogs[0]
+    return {
+      lastSyncAt: lastSync.created_at,
+      lastSyncStatus: lastSync.status,
+      lastSyncType: lastSync.sync_type,
+      isHealthy: lastSync.status === 'completed'
+    }
+  }, [syncLogs])
+
+  // Get sync statistics
+  const getSyncStats = useCallback(() => {
+    if (!syncLogs || syncLogs.length === 0) {
+      return {
+        totalSyncs: 0,
+        successfulSyncs: 0,
+        failedSyncs: 0,
+        totalPostsSynced: 0,
+        totalMediaSynced: 0,
+        successRate: 0
+      }
+    }
+
+    const totalSyncs = syncLogs.length
+    const successfulSyncs = syncLogs.filter(log => log.status === 'completed').length
+    const failedSyncs = syncLogs.filter(log => log.status === 'failed').length
+
+    const totalPostsSynced = syncLogs.reduce((sum, log) => {
+      return sum + (log.details?.posts_synced || 0)
+    }, 0)
+
+    const totalMediaSynced = syncLogs.reduce((sum, log) => {
+      return sum + (log.details?.media_synced || 0)
+    }, 0)
+
+    return {
+      totalSyncs,
+      successfulSyncs,
+      failedSyncs,
+      totalPostsSynced,
+      totalMediaSynced,
+      successRate: totalSyncs > 0 ? (successfulSyncs / totalSyncs) * 100 : 0
+    }
+  }, [syncLogs])
 
   // Testar conexão WordPress
   const testConnection = useMutation({
@@ -407,6 +572,17 @@ export function useWordPressSync(blogId: string) {
   })
 
   return {
+    // Enhanced sync functionality
+    syncLogs,
+    logsLoading,
+    logsError,
+    refetchLogs,
+    syncFromWordPress,
+    syncToWordPress,
+    getSyncStatus,
+    getSyncStats,
+    
+    // Legacy functionality (maintained for compatibility)
     syncStatus,
     setSyncStatus,
     syncSettings,
@@ -415,9 +591,15 @@ export function useWordPressSync(blogId: string) {
     syncPostFromWordPress,
     syncAllToWordPress,
     syncAllFromWordPress,
+    
+    // Loading states
     isTestingConnection: testConnection.isPending,
     isSyncingPost: syncPostToWordPress.isPending || syncPostFromWordPress.isPending,
     isSyncingAll: syncAllToWordPress.isPending || syncAllFromWordPress.isPending,
+    isSyncRunning: syncFromWordPressMutation.isPending || syncToWordPressMutation.isPending,
+    
+    // Error states
+    syncError: syncFromWordPressMutation.error || syncToWordPressMutation.error,
   }
 }
 

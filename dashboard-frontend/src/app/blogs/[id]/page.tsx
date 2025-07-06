@@ -79,7 +79,7 @@ export default function BlogDetailPage() {
       const { data: blogData, error: blogError } = await supabase
         .from('blogs')
         .select('*')
-        .eq('id', id)
+        .eq('id', Array.isArray(id) ? id[0] : id)
         .single()
 
       if (blogError) throw blogError
@@ -89,7 +89,7 @@ export default function BlogDetailPage() {
       const { data: postsData, error: postsError } = await supabase
         .from('content_posts')
         .select('*')
-        .eq('blog_id', id)
+        .eq('blog_id', Array.isArray(id) ? id[0] : id)
         .order('created_at', { ascending: false })
         .limit(10)
 
@@ -100,7 +100,7 @@ export default function BlogDetailPage() {
       const { data: keywordsData, error: keywordsError } = await supabase
         .from('main_keywords')
         .select('*')
-        .eq('blog_id', id)
+        .eq('blog_id', Array.isArray(id) ? id[0] : id)
         .order('created_at', { ascending: false })
         .limit(10)
 
@@ -230,8 +230,13 @@ export default function BlogDetailPage() {
 
   const createSampleKeyword = async () => {
     try {
+      if (!blog?.id) {
+        alert('❌ Blog não encontrado')
+        return
+      }
+
       const sampleKeyword = {
-        blog_id: blog?.id,
+        blog_id: blog.id,
         keyword: 'exemplo palavra-chave',
         msv: 1000,
         kw_difficulty: 45,

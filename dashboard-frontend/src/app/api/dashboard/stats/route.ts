@@ -21,22 +21,17 @@ export async function GET() {
       .from('content_posts')
       .select('*', { count: 'exact', head: true })
 
-    // Buscar total de oportunidades (soma de categories e clusters)
-    const { count: opportunitiesCategories } = await supabase
-      .from('content_opportunities_categories')
+    // Buscar total de keyword categories (oportunidades)
+    const { count: totalOpportunities } = await supabase
+      .from('keyword_categories')
       .select('*', { count: 'exact', head: true })
 
-    const { count: opportunitiesClusters } = await supabase
-      .from('content_opportunities_clusters')
-      .select('*', { count: 'exact', head: true })
-
-    const totalOpportunities = (opportunitiesCategories || 0) + (opportunitiesClusters || 0)
 
     const stats = {
       totalBlogs: totalBlogs || 0,
       totalKeywords: totalKeywords || 0,
       totalPosts: totalPosts || 0,
-      totalOpportunities
+      totalOpportunities: totalOpportunities || 0
     }
 
     return NextResponse.json(stats)
@@ -55,8 +50,10 @@ export async function POST(request: NextRequest) {
     const { query } = await request.json()
 
     // Executar query customizada usando MCP do Supabase
-    const { data, error } = await supabase.rpc('get_dashboard_metrics', {
-      query_type: query
+    const { data, error } = await supabase.rpc('match_keywords_semantic', {
+      query_embedding: query,
+      match_threshold: 0.7,
+      match_count: 10
     })
 
     if (error) {

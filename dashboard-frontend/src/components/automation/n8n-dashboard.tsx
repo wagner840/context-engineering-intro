@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -26,8 +26,6 @@ import {
   FileText,
   Database,
   Globe,
-  TrendingUp,
-  Settings,
   Plus,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -243,7 +241,7 @@ export function N8nDashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const n8nService = new N8nService();
-  const [selectedWorkflow, setSelectedWorkflow] = useState<
+  const [selectedWorkflow] = useState<
     string | undefined
   >();
 

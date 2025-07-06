@@ -24,11 +24,10 @@ export async function POST(request: NextRequest) {
     
     if (validatedData.type === 'keywords') {
       // Search for similar keywords using vector similarity
-      const { data, error } = await supabase.rpc('find_similar_keywords', {
-        query_embedding: queryEmbedding,
+      const { data, error } = await supabase.rpc('match_keywords_semantic', {
+        query_embedding: JSON.stringify(queryEmbedding),
         match_threshold: validatedData.match_threshold,
         match_count: validatedData.match_count,
-        blog_id: validatedData.blog_id,
       })
       
       if (error) {
@@ -42,12 +41,11 @@ export async function POST(request: NextRequest) {
         match_threshold: validatedData.match_threshold,
       })
     } else {
-      // Search for similar content posts
-      const { data, error } = await supabase.rpc('find_similar_posts', {
-        query_embedding: queryEmbedding,
+      // Search for similar content posts (using same function as keywords for now)
+      const { data, error } = await supabase.rpc('match_keywords_semantic', {
+        query_embedding: JSON.stringify(queryEmbedding),
         match_threshold: validatedData.match_threshold,
         match_count: validatedData.match_count,
-        blog_id: validatedData.blog_id,
       })
       
       if (error) {
@@ -105,11 +103,10 @@ export async function GET(request: NextRequest) {
     const queryEmbedding = new Array(1536).fill(0).map(() => Math.random())
     
     if (validatedData.type === 'keywords') {
-      const { data, error } = await supabase.rpc('find_similar_keywords', {
-        query_embedding: queryEmbedding,
+      const { data, error } = await supabase.rpc('match_keywords_semantic', {
+        query_embedding: JSON.stringify(queryEmbedding),
         match_threshold: validatedData.match_threshold,
         match_count: validatedData.match_count,
-        blog_id: validatedData.blog_id,
       })
       
       if (error) {
@@ -123,11 +120,10 @@ export async function GET(request: NextRequest) {
         match_threshold: validatedData.match_threshold,
       })
     } else {
-      const { data, error } = await supabase.rpc('find_similar_posts', {
-        query_embedding: queryEmbedding,
+      const { data, error } = await supabase.rpc('match_keywords_semantic', {
+        query_embedding: JSON.stringify(queryEmbedding),
         match_threshold: validatedData.match_threshold,
         match_count: validatedData.match_count,
-        blog_id: validatedData.blog_id,
       })
       
       if (error) {
