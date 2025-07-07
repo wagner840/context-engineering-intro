@@ -6,9 +6,10 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useMemo,
 } from "react";
 
-export interface NativeBlog {
+export interface Blog {
   id: string;
   name: string;
   domain: string;
@@ -21,14 +22,14 @@ export interface NativeBlog {
   icon: string;
 }
 
-export const NATIVE_BLOGS: NativeBlog[] = [
+export const BLOGS: Blog[] = [
   {
-    id: "einsof7",
+    id: "718d1bf5-ba1a-4c86-8fa4-c13599eb4952",
     name: "Einsof7",
     domain: "einsof7.com",
-    niche: "Tecnologia e IA",
+    niche: "TV e Streaming",
     description:
-      "Blog especializado em inteligência artificial, desenvolvimento e tecnologia avançada",
+      "Blog especializado em TV, streaming e tecnologia de entretenimento",
     wordpress_url:
       process.env.NEXT_PUBLIC_EINSOF7_WORDPRESS_URL || "https://einsof7.com",
     wordpress_username:
@@ -38,17 +39,17 @@ export const NATIVE_BLOGS: NativeBlog[] = [
       process.env.NEXT_PUBLIC_EINSOF7_WORDPRESS_PASSWORD ||
       "B0lk 6UEQ kNEz aVgP KnFS WXJBd",
     color: "blue",
-    icon: "🤖",
+    icon: "📺",
   },
   {
-    id: "optemil",
+    id: "25228f83-0b0d-47c7-926f-1ab6d7255f7b",
     name: "Optemil",
-    domain: "Optemil.com",
-    niche: "Marketing Digital",
+    domain: "optemil.com",
+    niche: "Saúde e Bem-estar",
     description:
-      "Blog focado em estratégias de marketing digital, otimização e crescimento online",
+      "Blog focado em saúde, bem-estar e qualidade de vida",
     wordpress_url:
-      process.env.NEXT_PUBLIC_OPTEMIL_WORDPRESS_URL || "https://Optemil.com",
+      process.env.NEXT_PUBLIC_OPTEMIL_WORDPRESS_URL || "https://optemil.com",
     wordpress_username:
       process.env.NEXT_PUBLIC_OPTEMIL_WORDPRESS_USERNAME ||
       "contatopawa@gmail.com",
@@ -56,15 +57,20 @@ export const NATIVE_BLOGS: NativeBlog[] = [
       process.env.NEXT_PUBLIC_OPTEMIL_WORDPRESS_PASSWORD ||
       "7FoB NxNd DNsU 7Mew O9Dr dLiY",
     color: "green",
-    icon: "📈",
+    icon: "🌿",
   },
 ];
 
+type BlogSelection = Blog | "all";
+
 interface BlogContextType {
-  activeBlog: NativeBlog | "all" | null;
-  setActiveBlog: (blog: NativeBlog | "all") => void;
-  blogs: NativeBlog[];
+  activeBlog: BlogSelection | null;
+  setActiveBlog: (blog: BlogSelection) => void;
+  blogs: Blog[];
   isLoading: boolean;
+  selectedBlogIds: string[];
+  getBlogById: (id: string) => Blog | undefined;
+  isAllSelected: boolean;
 }
 
 const BlogContext = createContext<BlogContextType | undefined>(undefined);
@@ -74,40 +80,45 @@ interface BlogProviderProps {
 }
 
 export function BlogProvider({ children }: BlogProviderProps) {
-  const [activeBlog, setActiveBlogState] = useState<NativeBlog | "all" | null>(
-    null
-  );
+  const [activeBlog, setActiveBlogState] = useState<BlogSelection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Carregar blog ativo do localStorage ou definir padrão
     const savedBlog = localStorage.getItem("activeBlog");
     if (savedBlog === "all") {
       setActiveBlogState("all");
     } else if (savedBlog) {
-      const blog = NATIVE_BLOGS.find((b) => b.id === savedBlog);
-      setActiveBlogState(blog || NATIVE_BLOGS[0]);
+      const blog = BLOGS.find((b) => b.id === savedBlog);
+      setActiveBlogState(blog || "all");
     } else {
-      // Padrão: todos os blogs
       setActiveBlogState("all");
     }
     setIsLoading(false);
   }, []);
 
-  const setActiveBlog = (blog: NativeBlog | "all") => {
+  const setActiveBlog = (blog: BlogSelection) => {
     setActiveBlogState(blog);
     localStorage.setItem("activeBlog", blog === "all" ? "all" : blog.id);
   };
 
+  const contextValue = useMemo(() => {
+    const selectedBlogIds = activeBlog === "all" ? BLOGS.map(b => b.id) : activeBlog ? [activeBlog.id] : [];
+    const isAllSelected = activeBlog === "all";
+    const getBlogById = (id: string) => BLOGS.find(b => b.id === id);
+
+    return {
+      activeBlog,
+      setActiveBlog,
+      blogs: BLOGS,
+      isLoading,
+      selectedBlogIds,
+      getBlogById,
+      isAllSelected,
+    };
+  }, [activeBlog, isLoading]);
+
   return (
-    <BlogContext.Provider
-      value={{
-        activeBlog,
-        setActiveBlog,
-        blogs: NATIVE_BLOGS,
-        isLoading,
-      }}
-    >
+    <BlogContext.Provider value={contextValue}>
       {children}
     </BlogContext.Provider>
   );

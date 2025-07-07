@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -35,7 +35,7 @@ import {
   Zap
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { BlogSelector } from '@/components/common/blog-selector'
+import { BlogSelectorDropdown } from '@/components/common/blog-selector-dropdown'
 
 interface NavItem {
   name: string
@@ -107,10 +107,35 @@ export function Sidebar() {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const sidebarRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Fechar sidebar no mobile quando mudar de rota
+  useEffect(() => {
+    setIsMobileOpen(false)
+  }, [pathname])
+
+  // Fechar sidebar ao clicar fora (mobile)
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        isMobileOpen && 
+        sidebarRef.current && 
+        !sidebarRef.current.contains(event.target as Node) &&
+        !(event.target as Element).closest('[data-mobile-menu-button]')
+      ) {
+        setIsMobileOpen(false)
+      }
+    }
+
+    if (isMobileOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isMobileOpen])
 
   const toggleExpanded = (name: string) => {
     const newExpanded = new Set(expandedItems)
@@ -145,15 +170,23 @@ export function Sidebar() {
               if (hasChildren) {
                 e.preventDefault()
                 toggleExpanded(item.name)
+              } else {
+                // Fechar mobile sidebar ao navegar
+                setIsMobileOpen(false)
               }
             }}
             className={cn(
               'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-              'hover:bg-accent hover:text-accent-foreground',
+              'hover:bg-accent hover:text-accent-foreground select-none',
               active && 'bg-primary text-primary-foreground shadow-sm',
               !active && 'text-muted-foreground',
               depth > 0 && 'ml-4 text-xs'
             )}
+            style={{
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none',
+              userSelect: 'none'
+            }}
           >
             <item.icon className={cn(
               'h-4 w-4 transition-transform duration-200',
@@ -237,7 +270,11 @@ export function Sidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed left-4 top-4 z-50 md:hidden"
+        data-mobile-menu-button
+        className={cn(
+          "fixed top-4 z-50 md:hidden bg-background/90 backdrop-blur-sm border",
+          isMobileOpen ? "left-[220px]" : "left-4"
+        )}
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         <AnimatePresence mode="wait">
@@ -249,7 +286,7 @@ export function Sidebar() {
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.1 }}
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </motion.div>
           ) : (
             <motion.div
@@ -259,7 +296,7 @@ export function Sidebar() {
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.1 }}
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -281,6 +318,7 @@ export function Sidebar() {
 
       {/* Sidebar */}
       <motion.aside
+        ref={sidebarRef}
         initial={false}
         animate={{
           width: isCollapsed ? 70 : 260,
@@ -288,13 +326,20 @@ export function Sidebar() {
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className={cn(
-          'fixed left-0 top-0 z-40 h-full border-r bg-card/50 backdrop-blur-xl',
-          'md:translate-x-0',
+          'fixed left-0 top-0 z-40 h-full border-r bg-card/95 backdrop-blur-xl shadow-xl',
+          'md:translate-x-0 md:shadow-none',
           // Mobile: show/hide based on mobile menu state
-          'max-md:transition-transform max-md:duration-300',
+          'max-md:transition-transform max-md:duration-300 max-md:w-64',
           !isMobileOpen && 'max-md:-translate-x-full',
           isMobileOpen && 'max-md:translate-x-0'
         )}
+        style={{
+          // Evita que o conteúdo dentro seja arrastável
+          WebkitUserSelect: 'none',
+          userSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent'
+        }}
       >
         <div className="flex h-full flex-col">
           {/* Logo/Header */}
@@ -334,7 +379,7 @@ export function Sidebar() {
           {/* Blog Selector */}
           {!isCollapsed && (
             <div className="px-3 py-2 border-b">
-              <BlogSelector size="sm" className="w-full" />
+              <BlogSelectorDropdown />
             </div>
           )}
 

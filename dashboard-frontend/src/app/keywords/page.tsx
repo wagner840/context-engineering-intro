@@ -141,7 +141,7 @@ export default function KeywordsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os blogs</SelectItem>
-                {blogs?.map((blog) => (
+                {blogs?.data?.map((blog) => (
                   <SelectItem key={blog.id} value={blog.id}>
                     {blog.name}
                   </SelectItem>
@@ -354,7 +354,7 @@ export default function KeywordsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Todos os blogs</SelectItem>
-                      {blogs?.map((blog) => (
+                      {blogs?.data?.map((blog) => (
                         <SelectItem key={blog.id} value={blog.id}>
                           {blog.name}
                         </SelectItem>

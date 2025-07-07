@@ -25,19 +25,13 @@ import { useBlog } from "@/contexts/blog-context";
 interface Blog {
   id: string;
   name: string;
-  url: string;
-  niche: string;
-  description: string;
-  status: "active" | "inactive" | "suspended";
-  wordpress_config: {
-    api_url: string;
-    username: string;
-  };
-  n8n_config?: {
-    webhook_url: string;
-    workflow_id: string;
-  };
-  created_at: string;
+  domain: string;
+  niche?: string | null;
+  description?: string | null;
+  settings?: any;
+  is_active?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   stats?: {
     posts_count: number;
     keywords_count: number;
@@ -48,16 +42,13 @@ interface Blog {
 function BlogCard({ blog, delay = 0 }: { blog: Blog; delay?: number }) {
   const router = useRouter();
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-800">Ativo</Badge>;
-      case "inactive":
-        return <Badge variant="secondary">Inativo</Badge>;
-      case "suspended":
-        return <Badge variant="destructive">Suspenso</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const getStatusBadge = (isActive: boolean | null | undefined) => {
+    if (isActive === true) {
+      return <Badge className="bg-green-100 text-green-800">Ativo</Badge>;
+    } else if (isActive === false) {
+      return <Badge variant="secondary">Inativo</Badge>;
+    } else {
+      return <Badge variant="outline">Indefinido</Badge>;
     }
   };
 
@@ -88,7 +79,7 @@ function BlogCard({ blog, delay = 0 }: { blog: Blog; delay?: number }) {
                 <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
                   {blog.name}
                 </CardTitle>
-                {getStatusBadge(blog.status)}
+                {getStatusBadge(blog.is_active)}
               </div>
               <CardDescription className="line-clamp-2">
                 {blog.description}
@@ -103,17 +94,17 @@ function BlogCard({ blog, delay = 0 }: { blog: Blog; delay?: number }) {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <ExternalLink className="h-4 w-4" />
               <a
-                href={blog.url}
+                href={blog.domain}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-primary transition-colors truncate"
               >
-                {blog.url}
+                {blog.domain}
               </a>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Target className="h-4 w-4" />
-              <span>Nicho: {blog.niche}</span>
+              <span>Nicho: {blog.niche || 'Não definido'}</span>
             </div>
           </div>
 

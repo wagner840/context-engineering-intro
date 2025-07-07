@@ -9,14 +9,14 @@
         "--project-ref=wayzhnpwphekjuznwqnr"
       ],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": "sbp_v0_42109cc1ab84a49bf2c2aeeda09bfb270edb3f85"
+        "SUPABASE_ACCESS_TOKEN": "YOUR_SUPABASE_ACCESS_TOKEN"
       }
     },
     "shadcn-ui": {
       "command": "npx",
       "args": ["@jpisnice/shadcn-ui-mcp-server"],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "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Ae"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
       }
     },
     "n8n-mcp": {
@@ -29,7 +29,7 @@
         "-e", "LOG_LEVEL=error",
         "-e", "DISABLE_CONSOLE_OUTPUT=true",
         "-e", "N8N_API_URL=https://n8n.einsof7.com",
-        "-e", "N8N_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YTM2MzJhNi0wMzhmLTQxNDQtYjk1MC0xZjM3ODAwNGVhMzQiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzUxMjY3NDAzfQ.WDdlAVCGbF8JkVKh0ZOfnc2b8saFhg0LAWdCGubGrlk",
+        "-e", "N8N_API_KEY=YOUR_N8N_API_KEY",
         "ghcr.io/czlonkowski/n8n-mcp:latest"
       ]
     }

@@ -9,60 +9,28 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { 
   useKeywords,
-  useCreateKeyword,
-  useKeywordStats,
-  useSemanticKeywordSearch 
+  useKeywordStats
 } from '@/hooks/use-keywords-dynamic'
-import type { KeywordFilters } from '@/lib/services/keywords-service'
 
 export default function TestKeywordsIntegration() {
-  const [testBlogId] = useState('550e8400-e29b-41d4-a716-446655440000') // Test blog ID
   const [searchTerm, setSearchTerm] = useState('')
   const [semanticQuery, setSemanticQuery] = useState('')
   
   // Hooks para testar
-  const [filters, setFilters] = useState<KeywordFilters>({ 
-    blog_id: testBlogId, 
-    limit: 10 
+  const [filters, setFilters] = useState({ 
+    limit: 10,
+    search: ""
   })
   
   const { data: keywords, isLoading, error, refetch } = useKeywords(filters)
-  const { data: stats } = useKeywordStats(testBlogId)
-  const createKeywordMutation = useCreateKeyword()
-  const semanticSearchMutation = useSemanticKeywordSearch()
+  const { data: stats } = useKeywordStats()
 
   const handleCreateTestKeyword = async () => {
-    try {
-      await createKeywordMutation.mutateAsync({
-        blog_id: testBlogId,
-        keyword: `teste-${Date.now()}`,
-        msv: 1000,
-        kw_difficulty: 45,
-        cpc: 2.5,
-        competition: 'MEDIUM',
-        search_intent: 'informational',
-        location: 'BR',
-        language: 'pt-BR'
-      })
-      refetch()
-    } catch (error) {
-      console.error('Erro ao criar keyword de teste:', error)
-    }
+    console.log('Funcionalidade de criar keyword não implementada')
   }
 
   const handleSemanticSearch = async () => {
-    if (!semanticQuery.trim()) return
-    
-    try {
-      await semanticSearchMutation.mutateAsync({
-        query: semanticQuery,
-        blog_id: testBlogId,
-        similarity_threshold: 0.7,
-        limit: 5
-      })
-    } catch (error) {
-      console.error('Erro na busca semântica:', error)
-    }
+    console.log('Funcionalidade de busca semântica não implementada')
   }
 
   const handleFilterSearch = () => {
@@ -88,19 +56,19 @@ export default function TestKeywordsIntegration() {
         <div className="bg-white p-4 rounded-lg border">
           <h3 className="font-semibold text-gray-700">Total Keywords</h3>
           <p className="text-2xl font-bold text-blue-600">
-            {stats?.total_keywords || 0}
+            {stats?.total || 0}
           </p>
         </div>
         <div className="bg-white p-4 rounded-lg border">
           <h3 className="font-semibold text-gray-700">Keywords Usadas</h3>
           <p className="text-2xl font-bold text-green-600">
-            {stats?.used_keywords || 0}
+            {stats?.active || 0}
           </p>
         </div>
         <div className="bg-white p-4 rounded-lg border">
           <h3 className="font-semibold text-gray-700">Volume Médio</h3>
           <p className="text-2xl font-bold text-purple-600">
-            {stats?.avg_search_volume || 0}
+            {Math.round(stats?.avgMsv || 0)}
           </p>
         </div>
       </div>
@@ -113,19 +81,11 @@ export default function TestKeywordsIntegration() {
           <h3 className="font-semibold mb-3">🆕 Criar Keyword de Teste</h3>
           <Button 
             onClick={handleCreateTestKeyword}
-            disabled={createKeywordMutation.isPending}
+            disabled={true}
             className="w-full"
           >
-            {createKeywordMutation.isPending ? 'Criando...' : 'Criar Keyword Teste'}
+            Criar Keyword Teste (Não Implementado)
           </Button>
-          {createKeywordMutation.isSuccess && (
-            <p className="text-green-600 mt-2 text-sm">✅ Keyword criada com sucesso!</p>
-          )}
-          {createKeywordMutation.error && (
-            <p className="text-red-600 mt-2 text-sm">
-              ❌ Erro: {createKeywordMutation.error.message}
-            </p>
-          )}
         </div>
 
         {/* Busca por filtro */}
@@ -156,37 +116,11 @@ export default function TestKeywordsIntegration() {
             />
             <Button 
               onClick={handleSemanticSearch}
-              disabled={semanticSearchMutation.isPending}
+              disabled={true}
             >
-              {semanticSearchMutation.isPending ? 'Buscando...' : 'Buscar'}
+              Buscar (Não Implementado)
             </Button>
           </div>
-          
-          {semanticSearchMutation.data && (
-            <div className="bg-gray-50 p-3 rounded">
-              <h4 className="font-medium mb-2">Resultados da Busca Semântica:</h4>
-              {semanticSearchMutation.data.length > 0 ? (
-                <ul className="space-y-1">
-                  {semanticSearchMutation.data.map((result, index) => (
-                    <li key={index} className="text-sm">
-                      <span className="font-medium">{result.keyword}</span>
-                      <span className="text-gray-500 ml-2">
-                        (Similaridade: {(result.similarity * 100).toFixed(1)}%)
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500 text-sm">Nenhum resultado encontrado</p>
-              )}
-            </div>
-          )}
-          
-          {semanticSearchMutation.error && (
-            <p className="text-red-600 text-sm">
-              ❌ Erro na busca: {semanticSearchMutation.error.message}
-            </p>
-          )}
         </div>
       </div>
 
@@ -195,7 +129,7 @@ export default function TestKeywordsIntegration() {
         <div className="p-4 border-b">
           <h3 className="font-semibold">📋 Keywords Encontradas</h3>
           <p className="text-sm text-gray-600">
-            Total: {keywords?.total || 0} | Página: {keywords?.page || 1}
+            Total: {keywords?.length || 0}
           </p>
         </div>
         
@@ -212,7 +146,7 @@ export default function TestKeywordsIntegration() {
                 Tentar Novamente
               </Button>
             </div>
-          ) : keywords?.data && keywords.data.length > 0 ? (
+          ) : keywords && keywords.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -227,7 +161,7 @@ export default function TestKeywordsIntegration() {
                   </tr>
                 </thead>
                 <tbody>
-                  {keywords.data.map((keyword) => (
+                  {keywords.map((keyword) => (
                     <tr key={keyword.id} className="border-b hover:bg-gray-50">
                       <td className="p-2 font-medium">{keyword.keyword}</td>
                       <td className="p-2">{keyword.msv || '-'}</td>
@@ -247,7 +181,7 @@ export default function TestKeywordsIntegration() {
                       </td>
                       <td className="p-2">
                         <span className="font-medium text-blue-600">
-                          {keyword.opportunity_score || 0}
+                          N/A
                         </span>
                       </td>
                     </tr>

@@ -36,8 +36,53 @@
       "Bash(git reset:*)",
       "Bash(true)",
       "Bash(git pull:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(node:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "mcp__ide__executeCode",
+      "Bash(rm:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(claude mcp:*)",
+      "Bash(npx:*)",
+      "Bash(supabase mcp:*)",
+      "mcp__supabase__list_tables",
+      "mcp__ide__getDiagnostics",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "mcp__memory__create_entities",
+      "mcp__memory__create_relations",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(SUPABASE_ACCESS_TOKEN=\"sbp_9fae590103afed2194ac62fe66eaa763f9c609a8\" npx -y @supabase/mcp-server-supabase@latest --read-only --project-ref=wayzhnpwphekjuznwqnr)",
+      "Bash(docker:*)",
+      "Bash(claude --debug)"
     ],
     "deny": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=wayzhnpwphekjuznwqnr"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_9fae590103afed2194ac62fe66eaa763f9c609a8"
+      }
+    }
   }
 }

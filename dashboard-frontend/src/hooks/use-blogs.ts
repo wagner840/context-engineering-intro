@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type {
-  Blog,
+  Blog as SupabaseBlog,
   BlogWithKeywords,
   DatabaseInsert,
   DatabaseUpdate,
@@ -10,10 +10,31 @@ import { toast } from "sonner";
 import { useBlog as useBlogContext } from "@/contexts/blog-context";
 
 export function useBlogs() {
-  const { activeBlog, blogs } = useBlogContext();
-  if (activeBlog === "all") return blogs;
-  if (activeBlog) return blogs.filter((b: any) => b.id === activeBlog.id);
-  return blogs;
+  const { selectedBlogIds, blogs, isAllSelected } = useBlogContext();
+  
+  return useQuery({
+    queryKey: ["blogs", selectedBlogIds],
+    queryFn: async () => {
+      // Se todos os blogs estão selecionados, retornar blogs do contexto
+      if (isAllSelected) {
+        return blogs;
+      }
+      
+      // Se blogs específicos estão selecionados, buscar dados do Supabase
+      if (selectedBlogIds.length > 0) {
+        const { data, error } = await supabase
+          .from("blogs")
+          .select("*")
+          .in("id", selectedBlogIds);
+          
+        if (error) throw error;
+        return data as SupabaseBlog[];
+      }
+      
+      return blogs;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
 }
 
 export function useBlog(id: string) {
@@ -50,7 +71,7 @@ export function useCreateBlog() {
         .single();
 
       if (error) throw error;
-      return data as Blog;
+      return data as SupabaseBlog;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
@@ -78,7 +99,7 @@ export function useUpdateBlog() {
         .single();
 
       if (error) throw error;
-      return data as Blog;
+      return data as SupabaseBlog;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["blogs"] });

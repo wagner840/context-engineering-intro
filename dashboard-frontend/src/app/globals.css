@@ -1,8 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* Prevent text selection and dragging on mobile */
+  .sidebar-content * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent scrolling when mobile sidebar is open */
+  .mobile-sidebar-open {
+    overflow: hidden;
+  }
+
   :root {
     /* Professional Color Palette */
     --background: 220 20% 98%;

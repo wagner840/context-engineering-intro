@@ -17,58 +17,72 @@ const postSchema = z.object({
   target_keywords: z.array(z.string()).optional(),
 })
 
+const WORDPRESS_CONFIGS = {
+  einsof7: {
+    url: process.env.EINSOF7_WORDPRESS_URL,
+    username: process.env.EINSOF7_WORDPRESS_USERNAME,
+    password: process.env.EINSOF7_WORDPRESS_PASSWORD,
+  },
+  optemil: {
+    url: process.env.OPTEMIL_WORDPRESS_URL,
+    username: process.env.OPTEMIL_WORDPRESS_USERNAME,
+    password: process.env.OPTEMIL_WORDPRESS_PASSWORD,
+  }
+};
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const blogId = searchParams.get('blog_id')
-    const status = searchParams.get('status')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const offset = parseInt(searchParams.get('offset') || '0')
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status') || 'draft';
+    const blog = searchParams.get('blog') as keyof typeof WORDPRESS_CONFIGS;
     
-    if (!blogId) {
-      return NextResponse.json(
-        { error: 'blog_id is required' },
-        { status: 400 }
-      )
+    if (!blog || !WORDPRESS_CONFIGS[blog]) {
+      return NextResponse.json({ error: 'Blog inválido' }, { status: 400 });
     }
-    
-    const supabase = createSupabaseServiceClient()
-    
-    // Get blog configuration
-    const { data: blog, error: blogError } = await supabase
-      .from('blogs')
-      .select('settings')
-      .eq('id', blogId)
-      .single()
-    
-    if (blogError || !blog?.settings) {
-      return NextResponse.json(
-        { error: 'Blog or WordPress configuration not found' },
-        { status: 404 }
-      )
+
+    const config = WORDPRESS_CONFIGS[blog];
+    if (!config.url || !config.username || !config.password) {
+      return NextResponse.json({ error: 'Configuração WordPress incompleta' }, { status: 500 });
     }
+
+    // Criar Basic Auth
+    const auth = Buffer.from(`${config.username}:${config.password}`).toString('base64');
     
-    const wp = new WordPressAPI(blog.settings as any)
-    
-    try {
-      const posts = await wp.getPosts({
-        status: (status as 'publish' | 'draft' | 'private' | 'pending') || undefined,
-        per_page: limit,
-        page: Math.floor(offset / limit) + 1,
-      })
-      
-      return NextResponse.json({ data: posts })
-    } catch (wpError) {
-      return NextResponse.json(
-        { error: 'Failed to fetch WordPress posts', details: wpError },
-        { status: 500 }
-      )
+    // Buscar posts do WordPress
+    const wpResponse = await fetch(`${config.url}/posts?status=${status}&per_page=100`, {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!wpResponse.ok) {
+      throw new Error(`WordPress API error: ${wpResponse.status}`);
     }
-  } catch (error) {
+
+    const posts = await wpResponse.json();
+    const totalPosts = wpResponse.headers.get('X-WP-Total') || '0';
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        posts, 
+        total: parseInt(totalPosts),
+        blog,
+        status 
+      },
+      {
+        headers: {
+          'X-WP-Total': totalPosts,
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error('Erro ao buscar posts WordPress:', error);
+    return NextResponse.json(
+      { error: 'Erro ao conectar com WordPress' },
       { status: 500 }
-    )
+    );
   }
 }
 

@@ -19,15 +19,10 @@ export function BlogSelector() {
   useEffect(() => {
     // Auto-select first blog if none selected and blogs are available
     if (!selectedBlog && blogs && blogs.length > 0) {
-      selectBlog({
-        ...blogs[0], 
-        niche: blogs[0].niche || null,
-        description: blogs[0].description || null,
-        settings: blogs[0].settings || {},
-        is_active: blogs[0].is_active || true,
-        created_at: blogs[0].created_at || new Date().toISOString(),
-        updated_at: blogs[0].updated_at || new Date().toISOString()
-      })
+      const firstBlog = blogs[0];
+      if ('created_at' in firstBlog && 'updated_at' in firstBlog) {
+        selectBlog(firstBlog);
+      }
     }
   }, [blogs, selectedBlog, selectBlog])
 
@@ -37,16 +32,8 @@ export function BlogSelector() {
       return
     }
     const blog = blogs?.find(b => b.id === blogId)
-    if (blog) {
-      selectBlog({
-        ...blog, 
-        niche: blog.niche || null,
-        description: blog.description || null,
-        settings: blog.settings || {},
-        is_active: blog.is_active || true,
-        created_at: blog.created_at || new Date().toISOString(),
-        updated_at: blog.updated_at || new Date().toISOString()
-      })
+    if (blog && 'created_at' in blog && 'updated_at' in blog) {
+      selectBlog(blog)
     }
   }
 
